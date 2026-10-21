@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Compass — профориентация и подбор вузов</title>
+<meta name="description" content="Пройди анкету из 7 шагов и получи 5 направлений, маршрут развития и подбор вузов в Казахстане и за рубежом. Бесплатно.">
+<meta property="og:title" content="Compass — найди своё направление и вуз">
+<meta property="og:description" content="Интересы, ценности, навыки и короткий разговор с AI → 5 направлений, маршрут и вузы с Fit Score.">
+<meta name="theme-color" content="#1E2BE0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='none' stroke='%231E2BE0' stroke-width='3'/%3E%3Crect x='11' y='11' width='10' height='10' fill='%231E2BE0' transform='rotate(45 16 16)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800;900&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: narrow icon rail on the left, one 760px working column on a topographic map ground; a hint card floats bottom-right. */
+:root{
+  --bg:#E8E3DA; --panel:#DFD9CE; --panel-2:#D5CEC1; --ink:#131316; --muted:#6B675E; --faint:#9A958A;
+  --line:#C3BCAF; --topo:rgba(70,62,48,.16); --accent:#1E2BE0; --accent-ink:#FFFFFF; --accent-soft:rgba(30,43,224,.10);
+  --note:#16171C; --note-ink:#F1EEE7; --ok:#1C7F52; --bad:#C2341F; --warn:#B26A00; --card:#FBFAF7;
+  --f-display:"Onest","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text","Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --rail:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141519; --panel:#1C1E24; --panel-2:#252831; --ink:#ECE9E2; --muted:#A29E95; --faint:#6E6B64;
+  --line:#353844; --topo:rgba(200,196,220,.08); --accent:#7480FF; --accent-ink:#0C0D12; --accent-soft:rgba(116,128,255,.14);
+  --note:#ECE9E2; --note-ink:#141519; --ok:#4CC08A; --bad:#FF7A63; --warn:#E8A33A; --card:#1C1E24; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141519; --panel:#1C1E24; --panel-2:#252831; --ink:#ECE9E2; --muted:#A29E95; --faint:#6E6B64;
+  --line:#353844; --topo:rgba(200,196,220,.08); --accent:#7480FF; --accent-ink:#0C0D12; --accent-soft:rgba(116,128,255,.14);
+  --note:#ECE9E2; --note-ink:#141519; --ok:#4CC08A; --bad:#FF7A63; --warn:#E8A33A; --card:#1C1E24; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+#topo{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+
+/* Rail */
+.rail{position:fixed;left:0;top:0;bottom:0;width:calc(var(--rail) + env(safe-area-inset-left,0px));padding-left:env(safe-area-inset-left,0px);
+  padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+  border-right:1px solid var(--line);background:var(--bg);z-index:20;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rail .logo{width:30px;height:30px;border:1.5px solid var(--accent);display:grid;place-items:center;margin-bottom:22px}
+.rail .logo i{width:11px;height:11px;background:var(--accent);transform:rotate(45deg)}
+.rail button{width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;color:var(--faint);position:relative}
+.rail button svg{width:19px;height:19px}
+.rail button:hover{color:var(--ink)}
+.rail button.on{background:var(--accent);color:var(--accent-ink)}
+.rail button[disabled]{opacity:.35;cursor:not-allowed}
+.rail .sep{width:28px;height:1px;background:var(--line);margin:6px 0}
+.rail .grow{flex:1}
+.rail button .tip{position:absolute;left:48px;top:50%;transform:translateY(-50%);background:var(--note);color:var(--note-ink);font-size:12px;padding:4px 8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.rail button:hover .tip{opacity:1}
+
+main{position:relative;z-index:1;margin-left:calc(var(--rail) + env(safe-area-inset-left,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 140px}
+.col{max-width:760px;margin:0 auto}
+.col.wide{max-width:980px}
+
+/* Typography */
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.eyebrow .m{color:var(--faint);margin-left:10px}
+.mono{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(30px,5vw,46px);line-height:1.02;letter-spacing:-.035em;margin:10px 0 12px;text-wrap:balance}
+h1.xl{font-size:clamp(36px,6.4vw,62px)}
+h2{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:-.01em;margin:0;display:flex;align-items:baseline;gap:10px}
+h2 .n{font-family:var(--f-mono);font-size:11px;font-weight:500;color:var(--accent)}
+h3{font-family:var(--f-display);font-weight:700;font-size:16px;margin:0}
+.lead{color:var(--muted);max-width:60ch;margin:0 0 26px}
+.sm{font-size:13px;color:var(--muted)}
+.label{font-weight:600;margin:26px 0 4px}
+.label + .sm{margin:0 0 10px}
+
+.rule{border:0;border-top:1.5px solid var(--ink);margin:0 0 18px}
+.sec{margin-top:44px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid var(--ink);padding-top:16px;margin-bottom:6px;flex-wrap:wrap}
+.sec-h + .sm{margin:0 0 16px;max-width:62ch}
+
+/* Steps strip */
+.steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);background:var(--panel);margin-bottom:34px}
+.steps button{border:0;border-right:1px solid var(--line);background:transparent;text-align:left;padding:9px 10px;min-width:0}
+.steps button:last-child{border-right:0}
+.steps button .k{display:block;font-family:var(--f-mono);font-size:10px;color:var(--faint)}
+.steps button .t{display:block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.steps button.done .t{color:var(--accent)}
+.steps button.cur{background:var(--accent)}
+.steps button.cur .k,.steps button.cur .t{color:var(--accent-ink)}
+.steps button[disabled]{cursor:not-allowed;opacity:.5}
+.head-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-top:1.5px solid var(--ink);padding-top:12px}
+
+/* Controls */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--panel);padding:8px 14px;font-size:14px}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:12px 22px;font-weight:600;font-family:var(--f-display);font-size:15px}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.4;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn.sm{padding:8px 14px;font-size:13px}
+.link{border:0;background:none;padding:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:14px}
+.actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:34px}
+.actions .sm{font-family:var(--f-mono);font-size:11px;color:var(--faint)}
+
+.field{width:100%;border:1px solid var(--line);background:var(--panel);padding:11px 13px;font-size:15px}
+.field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+textarea.field{min-height:84px;resize:vertical;line-height:1.5}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:var(--panel);padding:10px 12px 10px 16px;min-width:0}
+.row.on{border-color:var(--accent);background:var(--accent-soft)}
+.row .nm{min-width:0}
+.row .nm small{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-left:8px}
+.seg{display:flex;gap:4px;flex-shrink:0}
+.seg button{width:30px;height:30px;border:0;background:var(--panel-2);font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+
+/* Likert */
+.q{border:1px solid var(--line);background:var(--panel);padding:14px 16px;margin-bottom:8px}
+.q.on{border-color:var(--accent);background:var(--accent-soft)}
+.q p{margin:0 0 10px}
+.q p b{font-family:var(--f-mono);font-weight:400;color:var(--faint);margin-right:6px;font-size:13px}
+.lik{display:flex;flex-wrap:wrap;gap:4px}
+.lik button{border:0;background:var(--panel-2);padding:7px 11px;font-size:13px;color:var(--muted)}
+.lik button:hover{color:var(--ink)}
+.lik button.on{background:var(--accent);color:var(--accent-ink)}
+
+/* Value cards */
+.vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vcard{border:1px solid var(--line);background:var(--panel);text-align:left;padding:12px 14px;min-width:0}
+.vcard b{display:block;font-weight:600;font-size:14.5px}
+.vcard span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.vcard:hover{border-color:var(--ink)}
+.vcard.on{border-color:var(--accent);background:var(--accent-soft)}
+.vcard.on b{color:var(--accent)}
+.vcard.off{opacity:.45}
+.counter{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin:12px 0}
+.duel{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch}
+.duel .vcard{padding:22px 18px}
+.duel .vs{align-self:center;font-family:var(--f-mono);font-size:11px;color:var(--faint)}
+.progress{height:3px;background:var(--line);margin:14px 0 22px}
+.progress i{display:block;height:100%;background:var(--accent)}
+
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.msg{max-width:84%;padding:12px 14px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.msg.q{background:var(--panel);border:1px solid var(--line);align-self:flex-start;margin:0}
+.msg.a{background:var(--accent);color:var(--accent-ink);align-self:flex-end}
+.msg.think{color:var(--faint);font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:0;background:none;padding:4px 0}
+.compose{display:flex;gap:8px;margin-top:14px;align-items:stretch}
+.compose textarea{flex:1;min-height:52px}
+.panel{border:1px solid var(--line);background:var(--panel);padding:18px 20px}
+.panel ul{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.panel li{font-size:13.5px;color:var(--muted);padding-left:18px;position:relative}
+.panel li::before{content:"—";position:absolute;left:0;color:var(--accent)}
+.note{font-size:13px;color:var(--muted);border-left:2px solid var(--accent);padding:4px 0 4px 12px;margin:16px 0}
+.warnbox{border:1px solid var(--warn);color:var(--ink);background:transparent;padding:10px 14px;font-size:13.5px;margin-top:14px}
+
+/* Results */
+.cards2{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px}
+.box{background:var(--panel);border:1px solid var(--line);padding:18px 20px;position:relative;min-width:0}
+.box.tick::before,.box.tick::after{content:"";position:absolute;width:8px;height:8px;border-color:var(--accent);border-style:solid}
+.box.tick::before{left:-1px;top:-1px;border-width:1.5px 0 0 1.5px}
+.box.tick::after{right:-1px;bottom:-1px;border-width:0 1.5px 1.5px 0}
+.bars{display:grid;gap:9px;margin-top:12px}
+.bar{display:grid;grid-template-columns:150px minmax(0,1fr) 34px;gap:12px;align-items:center;font-size:13px;color:var(--muted)}
+.bar.top{color:var(--ink);font-weight:600}
+.bar .tr{height:8px;background:var(--line)}
+.bar .tr i{display:block;height:100%;background:var(--accent);opacity:.75}
+.bar.top .tr i{opacity:1}
+.bar .v{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.code{font-family:var(--f-mono);font-size:12px;color:var(--accent);letter-spacing:.1em;margin-top:10px}
+.conf-num{font-family:var(--f-mono);font-size:26px;color:var(--accent);font-variant-numeric:tabular-nums}
+.conf-bar{height:4px;background:var(--line);margin:8px 0 14px}
+.conf-bar i{display:block;height:100%;background:var(--accent)}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;font-size:13px}
+.checks span{color:var(--muted)}
+.checks span.y::before{content:"✓ ";color:var(--accent)}
+.checks span.n::before{content:"○ ";color:var(--faint)}
+
+.dir{border:1px solid var(--line);background:var(--panel);margin-bottom:8px}
+.dir.open{border-color:var(--accent)}
+.dir-h{display:grid;grid-template-columns:34px minmax(0,1fr) 120px 40px;gap:14px;align-items:center;padding:14px 16px;width:100%;border:0;background:transparent;text-align:left}
+.dir-h .i{font-family:var(--f-mono);font-size:12px;color:var(--faint)}
+.dir-h b{font-family:var(--f-display);font-weight:700;font-size:16px;display:block}
+.dir-h small{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+.meter{height:6px;background:var(--line)}
+.meter i{display:block;height:100%;background:var(--accent)}
+.score{font-family:var(--f-mono);font-size:16px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.dir-b{padding:0 16px 18px 64px}
+.contrib{display:grid;gap:6px;margin:4px 0 14px}
+.contrib div{display:grid;grid-template-columns:minmax(0,1fr) 58px 50px;gap:12px;font-size:13px;color:var(--muted);border-bottom:1px dashed var(--line);padding-bottom:6px}
+.contrib div b{font-weight:500;color:var(--ink)}
+.contrib .w,.contrib .p{font-family:var(--f-mono);font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums}
+.contrib .p{color:var(--accent)}
+.risks{display:grid;gap:6px;margin-bottom:16px}
+.risk{font-size:13px;color:var(--ink);padding-left:20px;position:relative}
+.risk::before{content:"!";position:absolute;left:2px;top:0;color:var(--warn);font-family:var(--f-mono);font-weight:700}
+.risk.ok::before{content:"✓";color:var(--ok)}
+
+/* Direction page */
+.gap{display:grid;grid-template-columns:minmax(0,1fr) 150px 50px;gap:14px;align-items:center;padding:14px 18px;margin-bottom:8px}
+.gap .nm small{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-left:8px}
+.ticks{display:flex;gap:3px}
+.ticks i{flex:1;height:5px;background:var(--line)}
+.ticks i.req{background:var(--faint);opacity:.55}
+.ticks i.have{background:var(--accent);opacity:1}
+.gap .v{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);text-align:right}
+.timeline{border-left:1px solid var(--line);margin-left:7px;padding-left:22px;display:grid;gap:28px;margin-top:18px}
+.tl-h{display:flex;align-items:baseline;gap:10px;position:relative;margin-bottom:12px}
+.tl-h::before{content:"";position:absolute;left:-30px;top:4px;width:12px;height:12px;border:1.5px solid var(--accent);border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 2.5px var(--bg),inset 0 0 0 6px var(--accent)}
+.tl-h b{font-family:var(--f-display);font-weight:800;font-size:17px}
+.tl-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tl-cards .box p{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
+.tl-cards .box h3{margin-top:6px;font-size:15px}
+.unis-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.unis-mini button{border:1px solid var(--line);background:var(--panel);text-align:left;padding:12px 14px}
+.unis-mini button:hover{border-color:var(--ink)}
+.unis-mini b{display:block;font-weight:600;font-size:14px}
+
+/* University list */
+.uni{border:1px solid var(--line);background:var(--panel);margin-bottom:8px}
+.uni.open{border-color:var(--accent)}
+.uni-h{display:grid;grid-template-columns:34px minmax(0,1fr) 110px 40px;gap:14px;align-items:center;padding:14px 16px;width:100%;border:0;background:transparent;text-align:left}
+.uni-h b{font-weight:600;font-size:15.5px;display:block}
+.uni-h small{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+.uni-b{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:4px 16px 18px 64px}
+.fl{display:grid;gap:8px;font-size:13px}
+.fl div{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:start;border-bottom:1px dashed var(--line);padding-bottom:7px}
+.fl .s.y{color:var(--accent)} .fl .s.n{color:var(--bad)} .fl .s.w{color:var(--warn)}
+.fl .wt{font-family:var(--f-mono);font-size:10px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+
+/* University card */
+.hero{position:relative;overflow:hidden;color:#fff;padding:120px 32px 30px;margin:-40px 0 30px;min-height:330px;display:flex;flex-direction:column;justify-content:flex-end}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero > *:not(canvas){position:relative}
+.hero{align-items:flex-start}
+.hero .back{position:absolute;left:32px;top:28px}
+.hero .mono{color:rgba(255,255,255,.7)}
+.hero h1{color:#fff;font-size:clamp(32px,6vw,56px);margin:8px 0 4px}
+.hero .meta{color:rgba(255,255,255,.82);font-size:15px;display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 16px}
+.hero .tags{display:flex;flex-wrap:wrap;gap:6px}
+.hero .tags span{border:1px solid rgba(255,255,255,.5);border-radius:99px;padding:4px 11px;font-size:12px;font-weight:600}
+.back{border:0;background:none;padding:0;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.back:hover{color:var(--ink)}
+.ucard{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px}
+.white{background:var(--card);border:1px solid var(--line);padding:22px 24px;min-width:0}
+.fit{display:grid;grid-template-columns:130px minmax(0,1fr);gap:24px;align-items:start}
+.ring{position:relative;width:130px;height:130px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring b{font-family:var(--f-display);font-size:38px;font-weight:600;line-height:1}
+.ring small{font-family:var(--f-mono);font-size:10px;color:var(--faint);letter-spacing:.1em}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600}
+.pill.ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.pill.mid{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+.pill.low{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:16px}
+.facts{display:grid;gap:10px;font-size:13.5px}
+.facts div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:8px}
+.facts span{color:var(--muted)}
+.facts b{font-weight:600;text-align:right}
+.todo{display:grid;gap:6px}
+.todo label{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:8px 10px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+.todo input{margin-top:3px;accent-color:var(--accent)}
+.todo label.done span{text-decoration:line-through;color:var(--faint)}
+.ai-out{white-space:pre-wrap;font-size:14px;line-height:1.55;margin-top:12px}
+
+/* Start */
+.start{max-width:440px;margin:6vh auto 0}
+.start .brand{display:flex;align-items:center;gap:10px;justify-content:center;font-family:var(--f-display);font-weight:700;font-size:16px;margin-bottom:26px}
+.start .brand i{width:26px;height:26px;border:1.5px solid var(--accent);display:grid;place-items:center}
+.start .brand i::after{content:"";width:9px;height:9px;background:var(--accent);transform:rotate(45deg)}
+.start .sheet{background:var(--panel);border:1px solid var(--line);padding:30px 28px}
+.start h1{font-size:30px}
+.start .stack{display:grid;gap:10px;margin-top:18px}
+.or{display:flex;align-items:center;gap:10px;color:var(--faint);font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;margin:6px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* Hint */
+.hint{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:340px;max-width:calc(100vw - 32px);
+  background:var(--bg);border:1.5px solid var(--accent);padding:14px 16px 12px 46px;z-index:30;box-shadow:6px 6px 0 var(--accent-soft)}
+.hint svg{position:absolute;left:16px;top:16px;width:18px;height:18px;color:var(--accent)}
+.hint .mono{font-size:10px}
+.hint p{margin:6px 0 8px;font-size:14px}
+.hint .x{position:absolute;right:8px;top:6px;border:0;background:none;color:var(--faint);font-size:18px;line-height:1;padding:4px}
+.hint .nx{border:0;background:none;padding:0;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.hint .nx:hover{color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--note);color:var(--note-ink);padding:10px 16px;font-size:14px;z-index:40}
+
+.loading{min-height:60vh;display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.empty{border:1px dashed var(--line);padding:26px;text-align:center;color:var(--muted)}
+
+@media (max-width:760px){
+  :root{--rail:0px}
+  .rail{top:auto;left:0;right:0;width:auto;height:calc(58px + env(safe-area-inset-bottom,0px));flex-direction:row;justify-content:space-around;
+    padding:0 max(8px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(8px,env(safe-area-inset-left,0px));border-right:0;border-top:1px solid var(--line)}
+  .rail .logo,.rail .sep,.rail .grow,.rail .tip{display:none}
+  main{margin-left:0;padding-block:26px 170px}
+  .steps{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .steps button .t{display:none}
+  .steps button{padding:8px 6px;text-align:center}
+  .grid2,.vgrid,.cards2,.tl-cards,.unis-mini,.uni-b,.cols2,.ucard{grid-template-columns:minmax(0,1fr)}
+  .row{flex-direction:column;align-items:flex-start}
+  .gap{grid-template-columns:minmax(0,1fr) 90px 40px;padding:12px}
+  .dir-h,.uni-h{grid-template-columns:24px minmax(0,1fr) 34px;gap:10px}
+  .dir-h .meter,.uni-h .meter{display:none}
+  .dir-b,.uni-b{padding-left:16px}
+  .bar{grid-template-columns:124px minmax(0,1fr) 30px;font-size:12px}
+  .hero .back{left:18px}
+  .hint{width:300px;padding:10px 12px 8px 40px}
+  .hint p{font-size:13px}
+  .fit{grid-template-columns:minmax(0,1fr)}
+  .duel{grid-template-columns:minmax(0,1fr)}
+  .duel .vs{text-align:center}
+  .hint{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  .hero{padding:90px 18px 24px}
+  .msg{max-width:94%}
+}
+/* Accounts & banners */
+.tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin:18px 0 4px}
+.tabs button{border:0;background:transparent;padding:10px;font-weight:600;color:var(--muted)}
+.tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.err{color:var(--bad);font-size:13.5px;min-height:1.2em;margin:0}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--accent);background:var(--accent-soft);padding:10px 14px;margin-bottom:22px;font-size:14px}
+.banner .btn{padding:7px 14px;font-size:13px}
+.saved{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}
+.saved.ok{color:var(--ok)}
+.copyrow{display:flex;gap:8px;margin-top:10px}
+.copyrow input{flex:1;min-width:0}
+.stack2{display:grid;gap:10px;max-width:420px}
+.stat-line{text-align:center;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--faint);margin-top:14px;text-transform:uppercase}
+.print-only{display:none}
+@media print{
+  .rail,#hint,.toast,.actions,.banner,.back,.filters,button.link,#topo,.hint{display:none!important}
+  main{margin:0!important;padding:0!important}
+  body{background:#fff;color:#000}
+  .dir,.uni,.box,.panel{break-inside:avoid}
+  .print-only{display:block}
+}
+@media (prefers-reduced-motion:no-preference){
+  .fade{animation:fade .35s ease both}
+  @keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+<canvas id="topo" aria-hidden="true"></canvas>
+<nav class="rail" id="rail" aria-label="Разделы"></nav>
+<main id="app"><div class="loading">Открываю карту…</div></main>
+<div id="hint"></div>
+
+<script>
+/* ============================== DATA ============================== */
+const SUBJECTS=[["math","Математика"],["phys","Физика"],["chem","Химия"],["bio","Биология"],["cs","Информатика"],["eng","Английский язык"],["hist","История"],["geo","География"],["lit","Литература"],["art","Изобразительное искусство"]];
+const SUBJ=Object.fromEntries(SUBJECTS);
+const COUNTRIES=["Казахстан","США","Канада","Великобритания","Германия","Швейцария","Нидерланды","Италия","Чехия","Венгрия","Турция","Сингапур","Южная Корея","Япония","Китай"];
+const BUDGETS=[[0,"Только грант"],[5000,"до $5 000"],[12000,"до $12 000"],[25000,"до $25 000"],[50000,"до $50 000"],[999999,"Без ограничений"]];
+const IELTS=["нет","5.0","5.5","6.0","6.5","7.0","7.5+"];
+const RT={R:"Реалистичный",I:"Исследовательский",A:"Артистический",S:"Социальный",E:"Предприимчивый",C:"Конвенциональный"};
+const RORDER=["R","I","A","S","E","C"];
+const RIASEC_Q=[
+ ["R","Мне нравится чинить или собирать вещи своими руками"],
+ ["I","Я люблю докапываться, почему что-то работает именно так"],
+ ["A","Мне важно, чтобы в работе было место для моего стиля"],
+ ["S","Мне нравится объяснять другим то, что я понял сам"],
+ ["E","Я легко беру на себя роль организатора в группе"],
+ ["C","Меня успокаивают задачи, где всё расписано по шаблону"],
+ ["R","Я скорее выберу работу на местности, чем в кабинете"],
+ ["I","Мне интересно решать задачи, у которых нет готового ответа"],
+ ["A","Я часто придумываю идеи, которые другим не приходят в голову"],
+ ["S","Ко мне часто приходят за советом или поддержкой"],
+ ["E","Мне нравится убеждать людей в своей идее"],
+ ["C","Мне нравится наводить порядок в таблицах, файлах и планах"],
+ ["R","Мне интересно, как устроены механизмы и техника"],
+ ["I","Я готов долго возиться с данными, если из них следует вывод"],
+ ["A","Мне нравится создавать: рисовать, писать, снимать, сочинять"],
+ ["S","Я получаю удовольствие, когда кому-то стало лучше из-за меня"],
+ ["E","Я хотел бы однажды запустить своё дело"],
+ ["C","Я замечаю ошибки и неточности, которые другие пропускают"]];
+const LIKERT=["Совсем не про меня","Скорее нет","Нейтрально","Скорее да","Точно про меня"];
+const VALUES=[
+ ["autonomy","Свобода решать самому","Никто не стоит над душой, я сам выбираю, как работать"],
+ ["create","Создавать новое","Придумывать то, чего до меня не было"],
+ ["expert","Стать экспертом","Глубоко разбираться в одном деле лучше многих"],
+ ["recognition","Признание","Чтобы мою работу замечали и ценили"],
+ ["income","Высокий доход","Зарабатывать заметно больше среднего"],
+ ["influence","Влиять на решения","Быть там, где принимают решения"],
+ ["stability","Стабильность","Понятный график, надёжность, без потрясений"],
+ ["demand","Востребованность","Профессия, которая точно нужна и через 10 лет"],
+ ["help","Помогать людям","Видеть, что кому-то стало лучше из-за меня"],
+ ["team","Сильная команда","Работать с людьми, у которых есть чему учиться"],
+ ["impact","Менять мир к лучшему","Решать проблемы, важные для общества"],
+ ["nature","Природа и экология","Работа, связанная с природой и её защитой"],
+ ["variety","Разнообразие задач","Каждый день не похож на предыдущий"],
+ ["balance","Баланс с личной жизнью","Работа не съедает всё время"],
+ ["learning","Постоянно учиться","Профессия, где всё время узнаёшь новое"],
+ ["remote","Работать откуда угодно","Не быть привязанным к одному городу и офису"]];
+const VAL=Object.fromEntries(VALUES.map(v=>[v[0],v]));
+const SKILLS=[
+ ["logic","Логическое мышление","p"],["discrete","Дискретная математика","p"],["coding","Программирование","p"],["systems","Системное мышление","p"],
+ ["stats","Статистика и анализ данных","p"],["physics","Физика","p"],["hands","Работа руками, прототипы","p"],["cad","3D-моделирование, CAD","p"],
+ ["biology","Биология","p"],["chemistry","Химия","p"],["lab","Лабораторная работа","p"],["writing","Академическое письмо","p"],
+ ["finlit","Финансовая грамотность","p"],["business","Бизнес-анализ","p"],["design","Дизайн и визуал","p"],["english","Английский язык","p"],
+ ["public","Публичные выступления","l"],["empathy","Эмпатия и работа с людьми","l"],["persistence","Усидчивость","l"]];
+const SK=Object.fromEntries(SKILLS.map(s=>[s[0],s]));
+const OPEN_Q=[
+ ["q1","Что тебя затягивало лет в 8–10?","Интерес, который держится с детства, надёжнее свежего увлечения.","Например: разбирал технику, рисовал карты, строил города в Minecraft…"],
+ ["q2","А что затягивает сейчас?","То, чем занимаешься, а не то, чем «надо». Где теряешь счёт времени.","Например: монтирую видео, разбираю алгоритмы, веду канал…"],
+ ["q3","В чём ты объективно сильнее большинства ровесников?","Без скромности и без преувеличений. Подойдёт то, за чем к тебе приходят другие.","Например: быстро нахожу закономерности, умею выступать…"],
+ ["q4","Каким ты видишь свой обычный день через десять лет?","Именно день, а не должность. Где ты, с кем, что делаешь руками и головой.","Например: работаю из разных стран над продуктом с командой…"]];
+const MEDIA=[["streams","Стримы","игры, разборы, лайвы"],["series","Сериалы и кино","истории, персонажи"],["books","Книги","художка, нон-фикшн"],["podcasts","Подкасты","разговоры, интервью"],["music","Музыка","слушаю, играю, пишу"],["visual","Визуал и арт","дизайн, фото, рисунок"],["sport","Спорт","играю, смотрю, тренирую"],["science","Научпоп","видео, статьи про науку"],["games","Игры","стратегии, симуляторы, сюжеты"],["business","Бизнес и деньги","стартапы, инвестиции"]];
+
+const DIRS=[
+ {id:"cs",name:"Компьютерные науки",en:"computer science",desc:"Алгоритмы, системы и данные. Учишься не «программировать на языке», а строить решения, которые масштабируются.",
+  r:{I:1,R:.35,C:.55,A:.2,E:.15,S:.1},v:{create:2,expert:2,demand:3,income:2,remote:2,learning:2,autonomy:1},subj:["math","cs","phys","eng"],
+  sk:{persistence:4,logic:5,coding:5,discrete:4,systems:4},roles:"Инженер-программист, ML-инженер, аналитик по кибербезопасности",
+  project:"Telegram-бот или веб-сервис, который решает задачу твоей школы: расписание, обмен учебниками, напоминания о дедлайнах.",olymp:"Республиканская олимпиада по информатике, Codeforces, хакатоны (например, от Astana Hub)."},
+ {id:"ds",name:"Data Science и аналитика",en:"data science",desc:"Находить в данных закономерности и превращать их в решения: от прогнозов спроса до медицинских моделей.",
+  r:{I:1,C:.8,E:.3,R:.2,A:.1,S:.1},v:{demand:3,income:2,expert:2,remote:2,learning:2,influence:1},subj:["math","cs","eng"],
+  sk:{stats:5,coding:4,logic:4,english:4,business:3},roles:"Аналитик данных, data scientist, продуктовый аналитик",
+  project:"Собрать открытые данные (например, stat.gov.kz или опрос в школе) и сделать исследование с графиками и выводами.",olymp:"Kaggle-соревнования для начинающих, олимпиады по математике и статистике."},
+ {id:"se",name:"Инженерия и робототехника",en:"engineering",desc:"Механика, электроника и автоматизация. Превращаешь физику в работающие устройства.",
+  r:{R:1,I:.8,C:.3,A:.15,E:.1,S:.05},v:{create:3,expert:2,demand:2,team:1,stability:1},subj:["math","phys","cs"],
+  sk:{physics:5,hands:4,cad:4,logic:4,persistence:4},roles:"Инженер-конструктор, инженер по робототехнике, специалист по автоматизации",
+  project:"Собрать устройство на Arduino, которое что-то измеряет или автоматизирует (полив, датчик CO₂ в классе).",olymp:"Олимпиада по физике, FIRST/WRO по робототехнике, инженерные хакатоны."},
+ {id:"arch",name:"Архитектура и урбанистика",en:"architecture",desc:"Как устроены здания и города, в которых людям хорошо жить. Инженерия плюс искусство.",
+  r:{A:1,R:.6,I:.45,S:.25,E:.2,C:.2},v:{create:3,recognition:2,impact:2,expert:1,variety:1},subj:["math","art","phys"],
+  sk:{design:5,cad:4,systems:3,hands:3,persistence:3},roles:"Архитектор, урбанист, дизайнер городской среды",
+  project:"Предложение по улучшению двора, остановки или школьного пространства: обмеры, эскизы, 3D-модель, опрос жителей.",olymp:"Конкурсы архитектурного рисунка, школьные проектные конкурсы по урбанистике."},
+ {id:"design",name:"Дизайн (UX/UI и продукт)",en:"design",desc:"Проектировать интерфейсы и продукты так, чтобы ими было удобно и приятно пользоваться.",
+  r:{A:1,E:.4,S:.35,I:.35,C:.15,R:.1},v:{create:3,remote:2,variety:2,recognition:2,autonomy:1},subj:["art","cs","eng","lit"],
+  sk:{design:5,empathy:4,public:3,english:3,coding:2},roles:"UX/UI-дизайнер, продуктовый дизайнер, дизайнер-исследователь",
+  project:"Переделать неудобное приложение или сайт (например, школьный дневник): интервью с пользователями, прототип в Figma, тест.",olymp:"Дизайн-конкурсы и хакатоны, портфолио на Behance/Dribbble."},
+ {id:"med",name:"Медицина",en:"medicine",desc:"Диагностика и лечение людей. Долгий путь обучения, высокая ответственность и очень прямая польза.",
+  r:{S:1,I:.9,R:.5,C:.3,A:.05,E:.1},v:{help:3,demand:2,stability:2,expert:2,recognition:1},subj:["bio","chem","eng"],
+  sk:{biology:5,chemistry:5,lab:4,persistence:5,empathy:4},roles:"Врач, исследователь в медицине, специалист общественного здравоохранения",
+  project:"Волонтёрство в клинике или фонде и исследование про здоровье школьников (сон, нагрузка, питание) с опросом.",olymp:"Олимпиады по биологии и химии, научные конкурсы (например, «Дарын»)."},
+ {id:"bio",name:"Биотех и науки о жизни",en:"biotechnology",desc:"Генетика, биоинженерия, лекарства. Наука в лаборатории, которая становится продуктами.",
+  r:{I:1,R:.5,C:.3,S:.2,A:.15,E:.1},v:{expert:2,impact:2,learning:3,create:2,nature:1},subj:["bio","chem","math"],
+  sk:{biology:5,chemistry:4,lab:5,stats:3,writing:3},roles:"Биотехнолог, исследователь, лабораторный аналитик",
+  project:"Небольшой эксперимент (например, рост растений при разном свете) с протоколом, статистикой и отчётом.",olymp:"Олимпиады по биологии и химии, научные проекты (ISEF и региональные отборы)."},
+ {id:"econ",name:"Экономика и финансы",en:"economics",desc:"Как люди, компании и страны распределяют ресурсы. Математика плюс поведение людей.",
+  r:{I:.7,C:.8,E:.7,S:.2,A:.1,R:.05},v:{income:3,influence:2,stability:2,expert:2,demand:1},subj:["math","eng","hist","geo"],
+  sk:{finlit:5,stats:4,logic:4,business:3,english:4},roles:"Экономист, финансовый аналитик, аналитик в банке или госсекторе",
+  project:"Исследование: сколько тратят школьники и их семьи (например, на подготовку к ЕНТ), с опросом и выводами.",olymp:"Олимпиада по экономике, Олимпиада по финансовой грамотности Нацбанка, кейс-чемпионаты."},
+ {id:"mgmt",name:"Бизнес и менеджмент",en:"business",desc:"Запускать и вести проекты и компании: люди, деньги, стратегия, маркетинг.",
+  r:{E:1,S:.5,C:.45,A:.2,I:.2,R:.05},v:{income:3,influence:2,autonomy:2,team:2,variety:2},subj:["math","eng"],
+  sk:{business:5,public:4,finlit:4,empathy:3,english:4},roles:"Предприниматель, проджект-менеджер, маркетолог, консультант",
+  project:"Мини-бизнес или школьный ивент с реальным бюджетом: посчитать затраты, продать, отчитаться о результатах.",olymp:"Бизнес-кейс чемпионаты, программы для юных предпринимателей, стартап-инкубаторы."},
+ {id:"psych",name:"Психология",en:"psychology",desc:"Как думают и чувствуют люди. От консультирования до исследований поведения.",
+  r:{S:1,I:.8,A:.35,C:.2,E:.15,R:.05},v:{help:3,expert:2,learning:2,balance:1,impact:1},subj:["bio","lit","hist","eng"],
+  sk:{empathy:5,stats:3,writing:4,public:3,english:3},roles:"Психолог, исследователь поведения, UX-исследователь, HR-специалист",
+  project:"Исследование стресса или выгорания у школьников перед экзаменами: опрос, анализ, рекомендации для школы.",olymp:"Научные конкурсы по социальным наукам, волонтёрство в службах поддержки."},
+ {id:"ir",name:"Международные отношения",en:"international relations",desc:"Политика, дипломатия, глобальные процессы. Как договариваются страны и организации.",
+  r:{E:.85,S:.7,I:.55,A:.3,C:.2,R:.05},v:{influence:3,impact:2,recognition:2,variety:2},subj:["hist","geo","eng","lit"],
+  sk:{english:5,writing:4,public:4,systems:3},roles:"Дипломат, аналитик по международной политике, специалист международных организаций",
+  project:"Организовать модель ООН в школе или вести аналитический блог о Центральной Азии.",olymp:"Модели ООН, дебаты, олимпиады по истории и географии."},
+ {id:"media",name:"Медиа и коммуникации",en:"media",desc:"Журналистика, контент, PR. Рассказывать истории так, чтобы их услышали.",
+  r:{A:.9,E:.7,S:.6,I:.3,C:.1,R:.05},v:{recognition:3,create:2,variety:2,influence:2,remote:1},subj:["lit","eng","hist"],
+  sk:{writing:5,public:4,design:3,english:4},roles:"Журналист, контент-продюсер, PR-специалист, SMM",
+  project:"Медиа-проект: канал или подкаст с регулярными выпусками и метриками охвата.",olymp:"Конкурсы школьной журналистики, медиа-хакатоны."},
+ {id:"env",name:"Экология и науки о Земле",en:"environmental science",desc:"Климат, вода, почвы, устойчивое развитие. Наука о том, как сохранить планету пригодной для жизни.",
+  r:{I:.9,R:.8,S:.35,C:.25,A:.15,E:.15},v:{nature:3,impact:3,learning:2,expert:1},subj:["geo","bio","chem"],
+  sk:{biology:3,chemistry:3,stats:3,lab:3,systems:3},roles:"Эколог, аналитик по устойчивому развитию, климатолог",
+  project:"Замерить качество воздуха или воды в районе и сравнить с нормами; опубликовать результаты.",olymp:"Олимпиады по географии и экологии, экологические научные конкурсы."},
+ {id:"edu",name:"Образование и EdTech",en:"education",desc:"Учить и создавать способы учиться: от преподавания до образовательных продуктов.",
+  r:{S:1,A:.5,E:.4,I:.3,C:.2,R:.05},v:{help:3,impact:2,learning:2,balance:1},subj:["lit","eng","math"],
+  sk:{public:4,empathy:5,writing:3,design:2},roles:"Учитель, методист, продакт в EdTech, тьютор",
+  project:"Кружок или онлайн-курс для младших классов с измеримым результатом (оценки, опрос до/после).",olymp:"Педагогические конкурсы, волонтёрское преподавание."},
+ {id:"law",name:"Право",en:"law",desc:"Как устроены правила общества и как защищать интересы людей и компаний.",
+  r:{E:.8,C:.7,S:.5,I:.5,A:.1,R:.05},v:{influence:3,stability:2,income:2,recognition:1},subj:["hist","lit","eng"],
+  sk:{writing:5,logic:4,public:4,english:4},roles:"Юрист, корпоративный юрист, специалист по правам человека",
+  project:"Гайд по правам школьников или подростков-работников, сделанный вместе с юристом-консультантом.",olymp:"Олимпиада по праву, дебаты, модели суда."}];
+const DIR=Object.fromEntries(DIRS.map(d=>[d.id,d]));
+
+/* Universities: tuition = примерная стоимость обучения в год для иностранного студента/гражданина РК, USD. gpa = 4.0 шкала. */
+const UNIS=[
+ {id:"aitu",name:"Astana IT University",city:"Астана",country:"Казахстан",rank:null,tuition:5500,gpa:3.0,ielts:5.0,est:2019,type:"Технический",tags:["STEM","IT","Англоязычные программы","Гос. гранты"],p:["cs","ds","design","mgmt","media"],site:"https://astanait.edu.kz",aid:"Государственные гранты по результатам ЕНТ",dl:"Приём документов: лето, после ЕНТ",hue:232},
+ {id:"nu",name:"Nazarbayev University",city:"Астана",country:"Казахстан",rank:null,tuition:0,gpa:3.5,ielts:6.5,est:2010,type:"Исследовательский",tags:["Исследовательский","Англоязычный","Гранты","NUFYP"],p:["cs","ds","se","bio","econ","mgmt","ir","med","env","psych"],site:"https://nu.edu.kz",aid:"Грант для граждан РК по конкурсу; учёт IELTS и NUET",dl:"Обычно зима–весна, по отбору NUET",hue:205,riskNote:"Грант конкурсный: нужен высокий NUET и IELTS"},
+ {id:"kaznu",name:"Al-Farabi Kazakh National University",city:"Алматы",country:"Казахстан",rank:150,tuition:3500,gpa:2.5,ielts:0,est:1934,type:"Классический",tags:["Классический","Широкий выбор","Гос. гранты"],p:["cs","ds","bio","econ","psych","ir","media","env","law","edu","mgmt"],site:"https://www.kaznu.kz",aid:"Государственные гранты по ЕНТ",dl:"Лето, после ЕНТ",hue:190},
+ {id:"kbtu",name:"Kazakh-British Technical University",city:"Алматы",country:"Казахстан",rank:null,tuition:7000,gpa:3.0,ielts:5.5,est:2001,type:"Технический",tags:["STEM","Нефтегаз и IT","Англоязычный"],p:["cs","ds","se","econ","mgmt"],site:"https://kbtu.edu.kz",aid:"Гос. гранты и внутренние скидки",dl:"Лето, после ЕНТ",hue:220},
+ {id:"kimep",name:"KIMEP University",city:"Алматы",country:"Казахстан",rank:null,tuition:9000,gpa:3.0,ielts:6.0,est:1992,type:"Бизнес и соц. науки",tags:["Бизнес","Англоязычный","Американская модель"],p:["econ","mgmt","ir","media","law"],site:"https://www.kimep.kz",aid:"Скидки за успеваемость, гос. гранты",dl:"Весна–лето",hue:18},
+ {id:"sdu",name:"SDU University",city:"Алматы",country:"Казахстан",rank:null,tuition:5000,gpa:2.8,ielts:5.5,est:1996,type:"Многопрофильный",tags:["IT","Педагогика","Кампус"],p:["cs","ds","edu","law","econ","media"],site:"https://sdu.edu.kz",aid:"Гос. гранты, внутренние скидки",dl:"Лето, после ЕНТ",hue:150},
+ {id:"satbayev",name:"Satbayev University",city:"Алматы",country:"Казахстан",rank:null,tuition:3500,gpa:2.5,ielts:0,est:1934,type:"Технический",tags:["Инженерия","Горное дело","Гос. гранты"],p:["se","env","arch","cs"],site:"https://satbayev.university",aid:"Гос. гранты по ЕНТ",dl:"Лето, после ЕНТ",hue:30},
+ {id:"kaznmu",name:"Asfendiyarov Kazakh National Medical University",city:"Алматы",country:"Казахстан",rank:null,tuition:4000,gpa:2.8,ielts:0,est:1930,type:"Медицинский",tags:["Медицина","Гос. гранты"],p:["med","bio","psych"],site:"https://kaznmu.edu.kz",aid:"Гос. гранты по ЕНТ (профиль биология–химия)",dl:"Лето, после ЕНТ",hue:350},
+ {id:"mit",name:"Massachusetts Institute of Technology",city:"Кембридж",country:"США",rank:1,tuition:62000,gpa:3.9,ielts:7.0,sat:true,est:1861,type:"Исследовательский",tags:["STEM","Need-blind для иностранцев","Исследования"],p:["cs","ds","se","arch","bio","econ","env"],site:"https://mitadmissions.org",aid:"Need-blind: помощь покрывает подтверждённую потребность семьи",dl:"Early Action — 1 ноября, Regular — начало января",hue:0},
+ {id:"toronto",name:"University of Toronto",city:"Торонто",country:"Канада",rank:25,tuition:45000,gpa:3.7,ielts:6.5,est:1827,type:"Исследовательский",tags:["Крупный кампус","Исследования","Стипендия Lester B. Pearson"],p:["cs","ds","se","arch","bio","econ","mgmt","psych","ir","env"],site:"https://future.utoronto.ca",aid:"Lester B. Pearson Scholarship — полное покрытие, очень высокий конкурс",dl:"Обычно ноябрь–январь",hue:215},
+ {id:"ucl",name:"University College London",city:"Лондон",country:"Великобритания",rank:9,tuition:45000,gpa:3.7,ielts:7.0,est:1826,type:"Исследовательский",tags:["Russell Group","Лондон","Исследования"],p:["cs","ds","se","arch","bio","econ","psych","ir","law","env","edu"],site:"https://www.ucl.ac.uk",aid:"Ограниченные стипендии; часто нужен Foundation после школы РК",dl:"Через UCAS: конец января",hue:280,riskNote:"Школьного аттестата РК часто недостаточно: нужен Foundation или A-levels/IB"},
+ {id:"manchester",name:"University of Manchester",city:"Манчестер",country:"Великобритания",rank:34,tuition:37000,gpa:3.5,ielts:6.5,est:1824,type:"Исследовательский",tags:["Russell Group","Студенческий город"],p:["cs","ds","se","arch","bio","econ","mgmt","psych","law","media"],site:"https://www.manchester.ac.uk",aid:"Стипендии для иностранных студентов (частичные)",dl:"Через UCAS: конец января",hue:265,riskNote:"Часто нужен Foundation Year после школы РК"},
+ {id:"tum",name:"Technical University of Munich",city:"Мюнхен",country:"Германия",rank:22,tuition:6000,gpa:3.5,ielts:6.5,est:1868,type:"Технический",tags:["STEM","TU9","Промышленные партнёры"],p:["cs","ds","se","arch","bio","mgmt","env"],site:"https://www.tum.de/en",aid:"Стипендии DAAD, Deutschlandstipendium",dl:"Зимний семестр: до 15 июля (по программе)",hue:210,riskNote:"Многие бакалавриаты на немецком; после школы РК обычно нужен Studienkolleg или 1–2 курса вуза"},
+ {id:"eth",name:"ETH Zurich",city:"Цюрих",country:"Швейцария",rank:7,tuition:5000,gpa:3.8,ielts:7.0,est:1855,type:"Технический",tags:["STEM","Топ-10 мира","Низкая стоимость"],p:["cs","ds","se","arch","bio","env"],site:"https://ethz.ch/en",aid:"Excellence Scholarship (в основном магистратура)",dl:"Обычно до 30 апреля",hue:200,riskNote:"Бакалавриат на немецком; для аттестата РК нужен полный вступительный экзамен"},
+ {id:"delft",name:"TU Delft",city:"Делфт",country:"Нидерланды",rank:47,tuition:20000,gpa:3.5,ielts:6.5,est:1842,type:"Технический",tags:["STEM","Индустриальный дизайн","Англоязычные программы"],p:["cs","se","arch","design","env"],site:"https://www.tudelft.nl/en",aid:"Ограниченные стипендии (Holland Scholarship — частичная)",dl:"Обычно 15 января для программ с отбором",hue:195},
+ {id:"polimi",name:"Politecnico di Milano",city:"Милан",country:"Италия",rank:111,tuition:4000,gpa:3.3,ielts:6.0,est:1863,type:"Технический",tags:["Дизайн","Архитектура","Низкая стоимость"],p:["se","arch","design","mgmt","cs"],site:"https://www.polimi.it/en",aid:"Стоимость зависит от дохода семьи; региональные стипендии DSU",dl:"Несколько волн: осень–весна, тест TOL/TIL",hue:225},
+ {id:"bme",name:"Budapest University of Technology (BME)",city:"Будапешт",country:"Венгрия",rank:null,tuition:6000,gpa:3.0,ielts:6.0,est:1782,type:"Технический",tags:["Stipendium Hungaricum","Инженерия","Англоязычные программы"],p:["se","cs","arch","econ","env"],site:"https://www.bme.hu",aid:"Stipendium Hungaricum: обучение + стипендия для граждан РК",dl:"Stipendium Hungaricum: обычно до середины января",hue:120,aidFull:true},
+ {id:"cvut",name:"Czech Technical University (ČVUT)",city:"Прага",country:"Чехия",rank:null,tuition:6000,gpa:3.0,ielts:6.0,est:1707,type:"Технический",tags:["Инженерия","Бесплатно на чешском"],p:["cs","se","arch","design"],site:"https://www.cvut.cz/en",aid:"На чешском языке — бесплатно (нужен уровень B2)",dl:"Обычно весна",hue:170},
+ {id:"charles",name:"Charles University (1st Faculty of Medicine)",city:"Прага",country:"Чехия",rank:null,tuition:20000,gpa:3.3,ielts:6.0,est:1348,type:"Классический",tags:["Медицина","Англоязычная программа"],p:["med","bio","psych"],site:"https://cuni.cz/UKEN-1.html",aid:"На чешском — бесплатно; на английском платно",dl:"Обычно до конца февраля, вступительный тест",hue:5},
+ {id:"metu",name:"Middle East Technical University (METU)",city:"Анкара",country:"Турция",rank:null,tuition:3000,gpa:3.0,ielts:6.0,est:1956,type:"Технический",tags:["Англоязычный","Инженерия","Türkiye Bursları"],p:["cs","se","arch","econ","ir","psych","env","design"],site:"https://www.metu.edu.tr",aid:"Türkiye Bursları: полная стипендия правительства Турции",dl:"Türkiye Bursları: обычно январь–февраль",hue:15,aidFull:true},
+ {id:"nus",name:"National University of Singapore",city:"Сингапур",country:"Сингапур",rank:8,tuition:30000,gpa:3.8,ielts:6.5,est:1905,type:"Исследовательский",tags:["Топ Азии","Англоязычный","Tuition Grant"],p:["cs","ds","se","arch","bio","econ","mgmt","psych","law","design"],site:"https://www.nus.edu.sg/oam",aid:"Tuition Grant снижает стоимость, взамен 3 года работы в Сингапуре",dl:"Обычно до конца февраля",hue:28},
+ {id:"kaist",name:"KAIST",city:"Тэджон",country:"Южная Корея",rank:53,tuition:8000,gpa:3.5,ielts:6.5,est:1971,type:"Технический",tags:["STEM","Стипендии для иностранцев","Англоязычный"],p:["cs","ds","se","bio","mgmt","design"],site:"https://admission.kaist.ac.kr/intl-undergraduate",aid:"Часто полная стипендия на обучение для иностранцев; также GKS",dl:"Несколько раундов: осень–зима",hue:220,aidFull:true},
+ {id:"tokyo",name:"University of Tokyo (PEAK)",city:"Токио",country:"Япония",rank:32,tuition:4000,gpa:3.7,ielts:7.0,est:1877,type:"Исследовательский",tags:["Англоязычная программа PEAK","MEXT"],p:["env","ir"],site:"https://peak.c.u-tokyo.ac.jp",aid:"Стипендия MEXT (через посольство Японии)",dl:"PEAK: обычно декабрь",hue:0},
+ {id:"tsinghua",name:"Tsinghua University",city:"Пекин",country:"Китай",rank:17,tuition:5000,gpa:3.5,ielts:6.5,est:1911,type:"Исследовательский",tags:["Топ Азии","CSC-стипендия"],p:["cs","se","econ","arch","env","ds"],site:"https://www.tsinghua.edu.cn/en",aid:"Стипендия правительства Китая (CSC)",dl:"Обычно декабрь–март",hue:275,riskNote:"Большинство бакалаврских программ на китайском (нужен HSK)"}];
+const UNI=Object.fromEntries(UNIS.map(u=>[u.id,u]));
+
+/* ============================== STATE ============================== */
+const KEY="compass.v1";
+const blank=()=>({user:null,view:"start",step:1,facts:{grade:"",grades:{},countries:[],budget:null,ielts:"нет",sat:""},
+  riasec:{},values:{ten:[],five:[],duels:{},phase:"ten"},skills:{},open:{},hobbies:{types:[],favs:[],ai:null},
+  interview:{turns:[],done:false,result:null,skipped:false},chosen:null,openDir:null,openUni:null,uni:null,dir:null,check:{},hintOff:{},uniFilter:"dir",aiUni:{}});
+let S=load();
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);return Object.assign(blank(),o)}}catch(e){}return blank()}
+/* Аккаунт и синхронизация */
+let ME=null,READONLY=null,AI_ON=false,STATS=null,syncState="idle",lastSaved=null;
+const API={async j(m,u,b){const r=await fetch(u,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(_){}
+  if(!r.ok){const e=new Error(d.error||"Нет связи с сервером. Проверь интернет.");e.status=r.status;e.code=d.code;throw e}return d}};
+const TRANSIENT=["_draftName","_confirmReset","_allDirs","_auth","_err","_busy","_confirmDel"];
+function cleanState(){const o={};for(const k in S)if(!TRANSIENT.includes(k))o[k]=S[k];if(o.interview)o.interview={...o.interview,waiting:false,error:null};return o}
+let saveT,syncT;function save(){if(READONLY)return;clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(cleanState()))}catch(e){}},150);
+  if(ME&&!(S.user&&S.user.demo)){clearTimeout(syncT);syncState="pending";paintSaved();syncT=setTimeout(pushState,1200)}}
+async function pushState(){try{await API.j("PUT","/api/state",{state:cleanState()});syncState="ok";lastSaved=new Date()}catch(e){syncState=e.status===401?"auth":"fail"}paintSaved()}
+function savedText(){if(READONLY)return "только просмотр";if(S.user&&S.user.demo)return "пример · не сохраняется";if(!ME)return "сохранено в браузере";return syncState==="pending"?"сохраняю…":syncState==="fail"?"нет связи · повторю":syncState==="auth"?"войди снова":"сохранено в аккаунте ✓"}
+function paintSaved(){document.querySelectorAll(".saved").forEach(el=>{el.textContent=savedText();el.classList.toggle("ok",ME&&syncState==="ok")});if(syncState==="fail"){clearTimeout(syncT);syncT=setTimeout(pushState,8000)}}
+addEventListener("beforeunload",()=>{if(syncState==="pending"&&ME){try{navigator.sendBeacon&&fetch("/api/state",{method:"PUT",keepalive:true,headers:{"content-type":"application/json"},body:JSON.stringify({state:cleanState()})})}catch(_){}}});
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const r0=x=>Math.round(x);
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}
+
+/* ============================== SCORING ============================== */
+function pairs(arr){const p=[];for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++)p.push([arr[i],arr[j]]);return p}
+function stepDone(n){
+  const f=S.facts;
+  if(n===1)return !!f.grade&&Object.keys(f.grades).length>=4&&f.countries.length>0&&f.budget!==null;
+  if(n===2)return RIASEC_Q.every((_,i)=>S.riasec[i]);
+  if(n===3)return S.values.five.length===5&&pairs(S.values.five).every(([a,b])=>S.values.duels[a+"|"+b]);
+  if(n===4)return SKILLS.every(s=>S.skills[s[0]]!==undefined);
+  if(n===5)return OPEN_Q.filter(q=>(S.open[q[0]]||"").trim().length>=10).length>=2;
+  if(n===6)return S.hobbies.types.length>0||S.hobbies.favs.length>0||S.hobbies.skipped;
+  if(n===7)return S.interview.done||S.interview.skipped;
+  return false}
+function maxReach(){let n=1;while(n<7&&stepDone(n))n++;return n}
+function allDone(){for(let i=1;i<=7;i++)if(!stepDone(i))return false;return true}
+
+function riasecScores(){
+  const sum={},cnt={};RORDER.forEach(t=>{sum[t]=0;cnt[t]=0});
+  RIASEC_Q.forEach(([t],i)=>{if(S.riasec[i]){sum[t]+=S.riasec[i];cnt[t]++}});
+  const adj={};RORDER.forEach(t=>adj[t]=0);
+  const ai=S.interview.result&&S.interview.result.riasec_adjust;if(ai)RORDER.forEach(t=>adj[t]+=clamp(+ai[t]||0,-10,10));
+  const hs=S.hobbies.ai&&S.hobbies.ai.signals;if(hs)hs.forEach(s=>{if(adj[s.type]!==undefined)adj[s.type]+=3});
+  const out={};RORDER.forEach(t=>{const base=cnt[t]?((sum[t]/cnt[t])-1)/4*100:50;out[t]=r0(clamp(base+clamp(adj[t],-12,12),0,100))});
+  return out}
+function hollandCode(sc){return [...RORDER].sort((a,b)=>sc[b]-sc[a]).slice(0,3).join("")}
+function valueRanks(){
+  const v=S.values,rw={};
+  if(v.five.length===5){const wins={};v.five.forEach(x=>wins[x]=0);pairs(v.five).forEach(([a,b])=>{const w=v.duels[a+"|"+b];if(w)wins[w]++});
+    const ord=[...v.five].sort((a,b)=>wins[b]-wins[a]||v.five.indexOf(a)-v.five.indexOf(b));ord.forEach((x,i)=>rw[x]=5-i);return {rw,ord}}
+  v.ten.forEach(x=>rw[x]=1.5);return {rw,ord:v.ten.slice(0,5)}}
+function gpa4(){const g=Object.values(S.facts.grades);if(!g.length)return null;const avg=g.reduce((a,b)=>a+b,0)/g.length;return Math.round(clamp(avg-1,0,4)*100)/100}
+function ieltsNum(){const s=S.facts.ielts;if(!s||s==="нет")return 0;return parseFloat(s)}
+
+function scoreDir(d,rs){
+  rs=rs||riasecScores();
+  const mean=RORDER.reduce((a,t)=>a+rs[t],0)/6;
+  let wsum=0,abs=0,rel=0;RORDER.forEach(t=>{const w=d.r[t]||0;wsum+=w;abs+=w*rs[t];rel+=w*(rs[t]-mean)});
+  const interest=clamp(.6*(abs/wsum)+.4*(50+1.6*rel/wsum),0,100);
+  const {rw}=valueRanks();const dv=Object.values(d.v).sort((a,b)=>b-a);const rv=Object.values(rw).sort((a,b)=>b-a);
+  let maxv=0;for(let i=0;i<Math.min(dv.length,rv.length);i++)maxv+=dv[i]*rv[i];
+  let raw=0;Object.keys(rw).forEach(k=>raw+=(d.v[k]||0)*rw[k]);
+  const values=Object.keys(rw).length&&maxv?clamp(raw/maxv*100,0,100):50;
+  const gs=d.subj.map(s=>S.facts.grades[s]).filter(Boolean);
+  const grades=gs.length?gs.reduce((a,g)=>a+(g-2)/3*100,0)/gs.length:50;
+  const req=Object.entries(d.sk);const skills=req.reduce((a,[k,lv])=>a+Math.min(1,(S.skills[k]||0)/lv),0)/req.length*100;
+  const bonus=S.interview.result&&S.interview.result.direction_bonus;
+  const hasAi=!!(bonus&&typeof bonus==="object");
+  const ai=hasAi?clamp(50+(+bonus[d.id]||0)*5,0,100):null;
+  let W={interest:.35,values:.20,grades:.20,skills:.15,ai:.10};if(!hasAi){W={interest:.39,values:.22,grades:.22,skills:.17,ai:0}}
+  const parts=[
+    {k:"interest",name:"Интересы (RIASEC)",why:"тип "+Object.entries(d.r).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]).join("+")+" у направления",s:interest,w:W.interest},
+    {k:"values",name:"Ценности",why:"совпадение с твоей пятёркой",s:values,w:W.values},
+    {k:"grades",name:"Оценки по ключевым предметам",why:d.subj.map(s=>SUBJ[s]).join(", "),s:grades,w:W.grades},
+    {k:"skills",name:"Навыки",why:"уровень относительно требуемого",s:skills,w:W.skills}];
+  if(hasAi)parts.push({k:"ai",name:"AI-интервью",why:"сигналы из разговора",s:ai,w:W.ai});
+  parts.forEach(p=>p.pts=p.s*p.w);
+  const total=r0(parts.reduce((a,p)=>a+p.pts,0));
+  const risks=[];
+  d.subj.forEach(s=>{const g=S.facts.grades[s];if(g&&g<=3)risks.push("Оценка по «"+SUBJ[s]+"» — "+g+", а это ключевой предмет")});
+  req.forEach(([k,lv])=>{const h=S.skills[k]||0;if(lv-h>=3)risks.push("Навык «"+SK[k][1]+"»: "+h+" из "+lv+" нужных")});
+  const topT=Object.entries(d.r).sort((a,b)=>b[1]-a[1])[0][0];if(rs[topT]<45)risks.push("Ведущий тип направления — «"+RT[topT]+"», у тебя он "+rs[topT]+" из 100");
+  if(S.values.five.includes("balance")&&["med","law"].includes(d.id))risks.push("Ты ценишь баланс, а здесь первые годы обычно очень плотные");
+  if(S.values.five.includes("stability")&&["media","design","mgmt"].includes(d.id))risks.push("Ты ценишь стабильность, а здесь доход и график часто нестабильны");
+  return {d,total,parts,risks}}
+function rankDirs(){const rs=riasecScores();return DIRS.map(d=>scoreDir(d,rs)).sort((a,b)=>b.total-a.total)}
+function confidence(){
+  const c=[["Тип интересов",stepDone(2)],["Ценности",stepDone(3)],["Оценки по предметам",Object.keys(S.facts.grades).length>=4],["Навыки",stepDone(4)],["AI-интервью",!!S.interview.result]];
+  return {pct:c.filter(x=>x[1]).length*20,c}}
+
+function scoreUni(u,dirId){
+  const f=S.facts,items=[];const add=(ok,w,yes,no,state)=>items.push({ok,w,txt:ok?yes:no,state:state||(ok?"y":"n")});
+  const d=dirId&&DIR[dirId];
+  if(d)add(u.p.includes(d.id),16,"Есть программы по направлению «"+d.en+"»","Нет программы по направлению «"+d.en+"»");
+  const cs=f.countries;add(!cs.length||cs.includes(u.country),15,"Страна "+u.country+" — в твоём списке","Страна "+u.country+" не в твоём списке");
+  const b=f.budget??999999;
+  if(u.tuition<=b)add(true,14,u.tuition===0?"Обучение покрывается грантом (по конкурсу)":"Стоимость ~$"+u.tuition.toLocaleString("ru-RU")+" укладывается в бюджет "+budgetLabel(b),"");
+  else if(u.aidFull)items.push({ok:true,w:14,half:true,txt:"~$"+u.tuition.toLocaleString("ru-RU")+" выше бюджета, но есть полная стипендия: "+u.aid,state:"w"});
+  else add(false,14,"","Стоимость ~$"+u.tuition.toLocaleString("ru-RU")+" выше бюджета "+budgetLabel(b));
+  const g=gpa4();if(g===null)items.push({ok:false,w:12,half:true,txt:"Оценки не указаны: не можем сравнить с порогом GPA "+u.gpa,state:"w"});
+  else add(g>=u.gpa,12,"GPA "+g.toFixed(2)+" не ниже порога "+u.gpa,"GPA "+g.toFixed(2)+" ниже порога "+u.gpa+" — нужно подтянуть");
+  const ie=ieltsNum();
+  if(!u.ielts)add(true,10,"IELTS не обязателен (приём по ЕНТ)","");
+  else if(ie===0)items.push({ok:false,w:10,half:true,txt:"IELTS ещё не сдан, нужен минимум "+u.ielts,state:"w"});
+  else add(ie>=u.ielts,10,"IELTS "+ie+" не ниже минимума "+u.ielts,"IELTS "+ie+" ниже минимума "+u.ielts);
+  if(u.sat){const sat=+f.sat||0;items.push(sat>=1450?{ok:true,w:6,txt:"SAT "+sat+" — конкурентный уровень",state:"y"}:{ok:false,w:6,half:!sat,txt:sat?"SAT "+sat+" ниже типичного уровня принятых (1500+)":"Нужен SAT/ACT: ещё не указан",state:sat?"n":"w"})}
+  const tot=items.reduce((a,i)=>a+i.w,0);const got=items.reduce((a,i)=>a+(i.ok&&!i.half?i.w:i.half?i.w*.4:0),0);
+  const risks=[];if(u.riskNote)risks.push(u.riskNote);
+  return {u,score:r0(got/tot*100),items,risks}}
+function budgetLabel(b){const x=BUDGETS.find(q=>q[0]===b);return x?x[1].toLowerCase():"$"+b}
+function rankUnis(dirId,filter){let list=UNIS.map(u=>scoreUni(u,dirId));if(filter==="dir"&&dirId)list=list.filter(x=>x.u.p.includes(dirId));if(filter==="country"&&S.facts.countries.length)list=list.filter(x=>S.facts.countries.includes(x.u.country));return list.sort((a,b)=>b.score-a.score)}
+
+/* ============================== AI ============================== */
+function parseLoose(t){t=String(t||"").trim();try{return JSON.parse(t)}catch(_){}const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f){try{return JSON.parse(f[1])}catch(_){}}
+  const a=t.search(/[\[{]/),b=Math.max(t.lastIndexOf("}"),t.lastIndexOf("]"));if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(_){}}throw {code:"invalid_json",text:t}}
+function getSample(){
+  if(!ME||READONLY||!AI_ON||(S.user&&S.user.demo))return Promise.resolve(null);
+  const call=async(prompt,opts={})=>{try{const d=await API.j("POST","/api/ai",{prompt,tier:opts.modelTier});if(opts.onText)opts.onText({text:d.text,delta:d.text});return {text:d.text,truncated:false}}
+    catch(e){throw {code:e.code==="ai_off"?"not_granted":e.status===401?"not_granted":(e.code||"upstream_error"),message:e.message}}};
+  call.json=async(p,o)=>{const {text}=await call(p,o);return parseLoose(text)};
+  return Promise.resolve(call)}
+let aiOff=false;
+function profileText(){
+  const rs=riasecScores(),{ord}=valueRanks();
+  const sk=SKILLS.filter(s=>(S.skills[s[0]]||0)>=4).map(s=>s[1]);
+  const gr=SUBJECTS.filter(s=>S.facts.grades[s[0]]).map(s=>s[1]+": "+S.facts.grades[s[0]]).join(", ");
+  return ["Имя: "+(S.user?.name||"ученик"),"Класс: "+(S.facts.grade||"?"),"Оценки (по 5-балльной): "+(gr||"нет"),
+   "RIASEC (0–100): "+RORDER.map(t=>t+"="+rs[t]).join(", ")+" (код "+hollandCode(rs)+")",
+   "Главные ценности по порядку: "+ord.map(v=>VAL[v][1]).join(", "),
+   "Сильные навыки (4–5 из 5): "+(sk.join(", ")||"нет"),
+   ...OPEN_Q.filter(q=>S.open[q[0]]).map(q=>q[1]+" — "+S.open[q[0]]),
+   "Что смотрит/читает: "+S.hobbies.types.map(t=>MEDIA.find(m=>m[0]===t)?.[1]).filter(Boolean).join(", "),
+   "Любимые авторы/игры/каналы: "+S.hobbies.favs.join(", ")].join("\n")}
+
+const FALLBACK_Q={
+ R:["Вспомни, что ты в последний раз собрал или починил сам. Что было самым интересным в процессе?","Тебе приятнее, когда результат можно потрогать, или когда он существует в виде идеи или кода? Приведи пример."],
+ I:["Расскажи про случай, когда ты долго разбирался в чём-то, просто потому что было интересно. Что именно ты выяснил?","Как ты обычно проверяешь, что твоя догадка верна?"],
+ A:["Какую вещь, сделанную тобой, ты бы показал незнакомому человеку, чтобы он понял тебя? Почему её?","Что для тебя важнее в своей работе: чтобы было красиво или чтобы было по-твоему?"],
+ S:["Вспомни, когда ты кому-то помог разобраться или пережить сложный момент. Что ты делал?","Тебя больше заряжает работа с людьми или после неё нужно восстанавливаться?"],
+ E:["Расскажи, как ты кого-то в чём-то убедил или что-то организовал. Что получилось, а что нет?","Если бы у тебя было 500 000 тенге на проект, что бы ты запустил?"],
+ C:["Какая система или порядок, которые ты сам завёл, реально облегчают тебе жизнь?","Что тебя больше раздражает: хаос в планах или скучная рутина?"],
+ common:["Какой школьный предмет ты бы оставил, даже если бы по нему не ставили оценки? Почему?","Что из того, что ты рассказал, ты делаешь без напоминаний и наград?","Кем ты точно не хочешь работать и почему?"]};
+function fallbackQuestion(i){const rs=riasecScores();const top=[...RORDER].sort((a,b)=>rs[b]-rs[a]);
+  const seq=[FALLBACK_Q[top[0]][0],FALLBACK_Q[top[1]][0],FALLBACK_Q.common[0],FALLBACK_Q[top[0]][1],FALLBACK_Q[top[2]][0],FALLBACK_Q.common[1],FALLBACK_Q.common[2]];return seq[i]||null}
+function fallbackSummary(){
+  const rs=riasecScores(),top=[...RORDER].sort((a,b)=>rs[b]-rs[a]),{ord}=valueRanks(),n=S.user?.name||"Ученик";
+  const ans=S.interview.turns.filter(t=>t.role==="a").map(t=>t.text);
+  return {summary:n+" по анкете больше всего тяготеет к типам «"+RT[top[0]]+"» и «"+RT[top[1]]+"». Для неё/него важнее всего: "+ord.slice(0,3).map(v=>VAL[v][1].toLowerCase()).join(", ")+". Это автоматическое резюме без AI: оно опирается только на ответы анкеты.",
+    evidence:ans.slice(0,2).map(a=>"Из ответа: «"+a.slice(0,140)+(a.length>140?"…":"")+"»"),riasec_adjust:{},direction_bonus:null,local:true}}
+
+/* ============================== VIEWS ============================== */
+const IC={
+ survey:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>',
+ compass:'<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+ route:'<rect x="4" y="5" width="16" height="16" rx="1"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+ ai:'<path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/>',
+ theme:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ bulb:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'};
+const svg=(k)=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+IC[k]+'</svg>';
+
+function renderRail(){
+  const has=!!S.user&&!READONLY,done=allDone();
+  const b=(view,icon,tip,dis)=>'<button data-act="nav" data-v="'+view+'" class="'+(curSection()===view?"on":"")+'" '+(dis?"disabled":"")+' aria-label="'+tip+'">'+svg(icon)+'<span class="tip">'+tip+'</span></button>';
+  $("#rail").innerHTML='<div class="logo"><i></i></div>'+b("wizard","survey","Анкета",!has)+b("results","compass","Направления",!done)+b("unis","search","Вузы",!done)+b("direction","route","Маршрут",!done||!S.chosen)+b("profile","user","Профиль",!has)+
+   '<div class="sep"></div>'+b("chat","ai","AI-разговор",!has||maxReach()<7)+'<div class="grow"></div><button data-act="theme" aria-label="Тема">'+svg("theme")+'<span class="tip">Светлая / тёмная</span></button>'}
+function curSection(){const v=S.view;if(v==="wizard")return S.step===7?"chat":"wizard";if(v==="uni")return "unis";return v}
+
+function banner(){
+  if(READONLY)return '<div class="banner"><span>Профиль <b>'+esc(READONLY.name)+'</b> · только просмотр</span><a class="btn" href="/">Пройти свою анкету</a></div>';
+  if(S.user&&S.user.demo)return '<div class="banner"><span>Это пример профиля. Твои ответы здесь не сохраняются.</span><button class="btn" data-act="exitdemo">Начать свою анкету</button></div>';
+  if(!ME&&S.user&&S.view!=="start")return '<div class="banner"><span>Ты не вошёл: ответы хранятся только в этом браузере.</span><button class="btn" data-act="toauth">Сохранить в аккаунт</button></div>';
+  return ""}
+function render(){
+  if(!S.user&&!READONLY)S.view="start";
+  if(S.view==="auth"&&ME)S.view="profile";
+  renderRail();
+  const V={start:vStart,auth:vStart,wizard:vWizard,results:vResults,direction:vDirection,unis:vUnis,uni:vUni,profile:vProfile}[S.view]||vStart;
+  const html=V();
+  $("#app").innerHTML=(S.view==="start"||S.view==="auth"||S.view==="uni"?"":'<div class="col'+(["results","direction","unis"].includes(S.view)?" wide":"")+'">'+banner()+'</div>')+html;
+  if(S.view==="uni"){const b=banner();if(b){const c=$("#app .col.wide");c&&c.insertAdjacentHTML("afterbegin",b)}}
+  renderHint();save();paintSaved();
+  if(S.view==="uni")drawHero();
+  if(S.view==="wizard"&&S.step===7)afterChatRender()}
+
+function vStart(){
+  const mode=S._auth||"register",busy=S._busy;
+  const guestHas=!ME&&S.user&&!S.user.demo;
+  return '<div class="start fade"><div class="brand"><i></i>Compass</div><div class="sheet">'+
+  '<div class="mono">Старт · 01</div><h1>'+(guestHas?"Сохрани прогресс":"Создай точку старта")+'</h1><p class="sm" style="margin:0">'+(guestHas?"Создай аккаунт, и все твои ответы перенесутся в него. Продолжить можно будет с любого устройства.":"Анкета займёт 15–20 минут: интересы, ценности, навыки и короткий разговор. В конце получишь 5 направлений, маршрут развития и подбор вузов.")+'</p>'+
+  '<div class="tabs" role="tablist"><button role="tab" class="'+(mode==="register"?"on":"")+'" data-act="authmode" data-v="register">Регистрация</button><button role="tab" class="'+(mode==="login"?"on":"")+'" data-act="authmode" data-v="login">Вход</button></div>'+
+  '<form class="stack" id="authform" novalidate>'+
+  (mode==="register"?'<label class="sm" for="nm">Как тебя зовут</label><input class="field" id="nm" name="name" autocomplete="given-name" placeholder="Например, Асылжан" value="'+esc(S._draftName||(guestHas?S.user.name:""))+'">':"")+
+  '<label class="sm" for="em">Email</label><input class="field" id="em" name="email" type="email" autocomplete="email" placeholder="you@mail.com">'+
+  '<label class="sm" for="pw">Пароль'+(mode==="register"?" (минимум 8 символов)":"")+'</label><input class="field" id="pw" name="password" type="password" autocomplete="'+(mode==="register"?"new-password":"current-password")+'">'+
+  '<p class="err" id="autherr" role="alert">'+esc(S._err||"")+'</p>'+
+  '<button class="btn" type="submit" '+(busy?"disabled":"")+'>'+(busy?"Секунду…":mode==="register"?(guestHas?"Создать аккаунт и сохранить":"Создать аккаунт и начать →"):"Войти →")+'</button></form>'+
+  (guestHas?'<div class="or">или</div><button class="btn ghost" data-act="backguest">Вернуться к анкете без аккаунта</button>':
+  '<div class="or">или</div><div class="stack" style="margin-top:0"><button class="btn ghost" data-act="guest">Начать без регистрации</button><button class="link" data-act="demo" style="justify-self:center">Посмотреть пример готового профиля</button></div>')+
+  '<p class="sm" style="margin:18px 0 0;font-size:12px">С аккаунтом ответы сохраняются на сервере и доступны с любого устройства. Без аккаунта — только в этом браузере.'+(mode==="login"?" Забыл пароль? Напиши администратору сайта, он поможет восстановить доступ.":"")+'</p></div>'+
+  (STATS&&STATS.users>=5?'<div class="stat-line">Уже '+STATS.users+' учеников прошли Compass</div>':"")+'</div>'}
+async function submitAuth(){
+  const mode=S._auth||"register";const f=$("#authform");const body={email:f.email.value.trim(),password:f.password.value};
+  if(mode==="register"){body.name=(f.name.value||"").trim();if(S.user&&!S.user.demo&&S.user.name)body.state=cleanState()}
+  if(mode==="register"&&!body.name){S._err="Напиши имя";render();$("#nm")?.focus();return}
+  if(!body.email||!body.password){S._err="Заполни email и пароль";render();return}
+  S._busy=true;S._err="";render();$("#em").value=body.email;
+  try{const d=await API.j("POST",mode==="register"?"/api/register":"/api/login",body);ME=d.user;
+    if(d.state&&d.state.user){S=Object.assign(blank(),d.state)}else{if(!S.user||S.user.demo)S=blank();S.user={name:ME.name,city:S.user?.city||""};if(!S.view||S.view==="start"||S.view==="auth")S.view="wizard"}
+    S.user.name=ME.name;S.view=allDone()?"results":"wizard";if(S.view==="wizard")S.step=Math.min(maxReach(),7);
+    S._busy=false;syncState="ok";render();pushState();window.scrollTo({top:0});toast(mode==="register"?"Аккаунт создан. Прогресс сохраняется автоматически.":"С возвращением, "+ME.name+"!")}
+  catch(e){S._busy=false;S._err=e.message;render();const em=$("#em");if(em)em.value=body.email}}
+
+const STEP_T=["Факты","Интересы","Ценности","Навыки","Про себя","Увлечения","Разговор"];
+const STEP_M=["досягаемость","RIASEC","Шварц","skills gap","самоотчёт","культурные сигналы","AI interview"];
+function stepsBar(){const mr=maxReach();return '<div class="steps">'+STEP_T.map((t,i)=>{const n=i+1;const cls=(S.step===n?"cur ":"")+(stepDone(n)?"done":"");return '<button data-act="step" data-n="'+n+'" class="'+cls+'" '+(n>mr&&!stepDone(n)?"disabled":"")+'><span class="k">0'+n+'</span><span class="t">'+(stepDone(n)?"✓ ":"")+t+'</span></button>'}).join("")+'</div>'}
+function stepHead(title,lead){return stepsBar()+'<div class="head-row"><span class="eyebrow">Шаг '+S.step+' из 7<span class="m">метод · '+STEP_M[S.step-1]+'</span></span><span class="saved"></span></div><h1>'+title+'</h1><p class="lead">'+lead+'</p>'}
+function nextBtn(label,extra){const ok=stepDone(S.step);return '<div class="actions"><button class="btn" data-act="next" '+(ok?"":"disabled")+'>'+(label||"Дальше")+'</button>'+(S.step>1?'<button class="link" data-act="prev">Назад</button>':"")+(extra||"")+'</div>'}
+
+function vWizard(){return '<div class="col fade">'+[w1,w2,w3,w4,w5,w6,w7][S.step-1]()+'</div>'}
+
+function w1(){const f=S.facts;
+  return stepHead("Начнём с фактов","Оценки нужны не для оценки тебя, а чтобы понять, какие специальности реально досягаемы и что придётся подтянуть.")+
+  '<div class="grid2" style="margin-bottom:4px">'+(!ME?'<div><label class="label" style="display:block;margin-top:0" for="gname">Как тебя зовут</label><input class="field" id="gname" autocomplete="given-name" placeholder="Имя" value="'+esc(S.user&&S.user.name!=="Гость"?S.user.name:"")+'"></div>':"")+
+  '<div><label class="label" style="display:block;margin-top:0" for="gcity">Город</label><input class="field" id="gcity" placeholder="Например, Актобе" value="'+esc(S.user?.city||"")+'"></div></div>'+
+  '<div class="label">Класс</div><div class="chips">'+["9","10","11","12"].map(g=>'<button class="chip '+(f.grade===g?"on":"")+'" data-act="grade" data-v="'+g+'">'+g+' класс</button>').join("")+'</div>'+
+  '<div class="label">Оценки по предметам</div><p class="sm">Только те, что помнишь. Пропущенные предметы просто не участвуют в расчёте.</p><div class="grid2">'+
+  SUBJECTS.map(([id,nm])=>'<div class="row '+(f.grades[id]?"on":"")+'"><span class="nm">'+nm+'</span><div class="seg">'+[2,3,4,5].map(g=>'<button data-act="gr" data-s="'+id+'" data-v="'+g+'" class="'+(f.grades[id]===g?"on":"")+'" aria-label="'+nm+' '+g+'">'+g+'</button>').join("")+'</div></div>').join("")+'</div>'+
+  '<div class="label">Где рассматриваешь учёбу</div><p class="sm">Можно несколько.</p><div class="chips">'+COUNTRIES.map(c=>'<button class="chip '+(f.countries.includes(c)?"on":"")+'" data-act="country" data-v="'+c+'">'+c+'</button>').join("")+'</div>'+
+  '<div class="label">Бюджет семьи на обучение в год</div><p class="sm">Примерно. От этого зависит, какие вузы попадут в подбор без стипендии.</p><div class="chips">'+BUDGETS.map(([v,l])=>'<button class="chip '+(f.budget===v?"on":"")+'" data-act="budget" data-v="'+v+'">'+l+'</button>').join("")+'</div>'+
+  '<div class="label">IELTS</div><p class="sm">Если ещё не сдавал, оставь «нет».</p><div class="chips">'+IELTS.map(v=>'<button class="chip '+(f.ielts===v?"on":"")+'" data-act="ielts" data-v="'+v+'">'+v+'</button>').join("")+'</div>'+
+  '<div class="label">SAT (если есть)</div><p class="sm">Нужен в основном для вузов США.</p><input class="field" style="max-width:200px" id="sat" inputmode="numeric" placeholder="например, 1380" value="'+esc(f.sat)+'">'+
+  nextBtn("Дальше",'<span class="sm">'+(stepDone(1)?"":"нужно: класс, 4+ оценки, страна и бюджет")+'</span>')}
+
+function w2(){const n=Object.keys(S.riasec).length;
+  return stepHead("Как ты любишь работать","Это короткая версия Interest Profiler по модели Холланда, той же, на которой построена база профессий O*NET. Отвечай про то, как есть сейчас, а не как «правильно».")+
+  '<div class="counter">'+n+' / 18 ответов</div>'+
+  RIASEC_Q.map(([t,q],i)=>'<div class="q '+(S.riasec[i]?"on":"")+'"><p><b>'+(i+1)+'.</b>'+q+'</p><div class="lik">'+LIKERT.map((l,j)=>'<button data-act="lik" data-i="'+i+'" data-v="'+(j+1)+'" class="'+(S.riasec[i]===j+1?"on":"")+'">'+l+'</button>').join("")+'</div></div>').join("")+
+  nextBtn()}
+
+function w3(){const v=S.values;
+  if(v.phase==="ten"){return stepHead("Что для тебя важно в работе?","Отметь 10 карточек, которые про тебя. Формулировки построены на модели базовых ценностей Шварца.")+
+    '<div class="counter">Выбрано '+v.ten.length+' из 10</div><div class="vgrid">'+VALUES.map(([id,t,d])=>{const on=v.ten.includes(id);const off=!on&&v.ten.length>=10;return '<button class="vcard '+(on?"on ":"")+(off?"off":"")+'" data-act="v10" data-v="'+id+'"><b>'+t+'</b><span>'+d+'</span></button>'}).join("")+'</div>'+
+    '<div class="actions"><button class="btn" data-act="vphase" data-v="five" '+(v.ten.length===10?"":"disabled")+'>К пятёрке</button><button class="link" data-act="prev">Назад</button></div>'}
+  if(v.phase==="five"){return stepHead("Теперь оставь только пять","Из десяти выбери пять по-настоящему принципиальных. Дальше они сыграют между собой.")+
+    '<div class="counter">Выбрано '+v.five.length+' из 5</div><div class="vgrid">'+v.ten.map(id=>{const [,t,d]=VAL[id];const on=v.five.includes(id);const off=!on&&v.five.length>=5;return '<button class="vcard '+(on?"on ":"")+(off?"off":"")+'" data-act="v5" data-v="'+id+'"><b>'+t+'</b><span>'+d+'</span></button>'}).join("")+'</div>'+
+    '<div class="actions"><button class="btn" data-act="vphase" data-v="duel" '+(v.five.length===5?"":"disabled")+'>К дуэлям</button><button class="link" data-act="vphase" data-v="ten">← Вернуться к десяти</button></div>'}
+  const ps=pairs(v.five),done=ps.filter(([a,b])=>v.duels[a+"|"+b]).length,cur=ps.find(([a,b])=>!v.duels[a+"|"+b]);
+  let body;
+  if(cur){const [a,b]=cur;body='<div class="counter">Дуэль '+(done+1)+' из '+ps.length+'</div><div class="progress"><i style="width:'+(done/ps.length*100)+'%"></i></div><div class="duel">'+
+    '<button class="vcard" data-act="duel" data-a="'+a+'" data-b="'+b+'" data-w="'+a+'"><b>'+VAL[a][1]+'</b><span>'+VAL[a][2]+'</span></button><span class="vs">или</span>'+
+    '<button class="vcard" data-act="duel" data-a="'+a+'" data-b="'+b+'" data-w="'+b+'"><b>'+VAL[b][1]+'</b><span>'+VAL[b][2]+'</span></button></div>'}
+  else{const {ord}=valueRanks();body='<div class="progress"><i style="width:100%"></i></div><div class="panel"><div class="mono">Твой порядок ценностей</div><div class="bars">'+ord.map((id,i)=>'<div class="bar '+(i===0?"top":"")+'"><span>'+(i+1)+'. '+VAL[id][1]+'</span><span class="tr"><i style="width:'+((5-i)/5*100)+'%"></i></span><span class="v">'+(5-i)+'</span></div>').join("")+'</div></div>'}
+  return stepHead("Что важнее лично тебе?","Дуэль: 10 пар из твоей пятёрки. Каждая пара встречается один раз, итоговый порядок не зависит от везения жеребьёвки.")+body+
+   '<div class="actions"><button class="btn" data-act="next" '+(stepDone(3)?"":"disabled")+'>Дальше</button><button class="link" data-act="vreset">Переиграть дуэли</button><button class="link" data-act="vphase" data-v="five">← К пятёрке</button></div>'}
+
+function w4(){const n=Object.keys(S.skills).length;
+  const row=([id,nm,t])=>'<div class="row '+(S.skills[id]!==undefined?"on":"")+'"><span class="nm">'+nm+(t==="l"?'<small>личное качество</small>':"")+'</span><div class="seg">'+[0,1,2,3,4,5].map(g=>'<button data-act="sk" data-s="'+id+'" data-v="'+g+'" class="'+(S.skills[id]===g?"on":"")+'" aria-label="'+nm+' '+g+'">'+g+'</button>').join("")+'</div></div>';
+  return stepHead("Что у тебя уже есть","Оцени честно: 0 — не про меня, 5 — делаю лучше большинства ровесников. Заниженная оценка просто раздует список того, что «надо подтянуть».")+
+   '<div class="counter">'+n+' / '+SKILLS.length+'</div><div class="label" style="margin-top:6px">Профессиональные навыки</div><div style="display:grid;gap:8px;margin-top:10px">'+SKILLS.filter(s=>s[2]==="p").map(row).join("")+'</div>'+
+   '<div class="label">Личные качества</div><div style="display:grid;gap:8px;margin-top:10px">'+SKILLS.filter(s=>s[2]==="l").map(row).join("")+'</div>'+nextBtn()}
+
+function w5(){return stepHead("Открытые ответы","Система соберёт устойчивые интересы, сильные стороны и образ обычного дня, а не название должности. Достаточно двух ответов, но чем больше, тем точнее.")+
+  OPEN_Q.map(([id,q,h,ph],i)=>'<div class="label"><span class="mono" style="color:var(--accent);margin-right:8px">0'+(i+1)+'</span>'+q+'</div><p class="sm">'+h+'</p><textarea class="field" data-in="open" data-k="'+id+'" id="o_'+id+'" placeholder="'+esc(ph)+'">'+esc(S.open[id]||"")+'</textarea>').join("")+
+  nextBtn("Дальше",'<span class="sm" id="openhint">'+(stepDone(5)?"":"нужно минимум два ответа")+'</span>')}
+
+function w6(){const h=S.hobbies;
+  const ai=h.ai;
+  return stepHead("То, во что ты залипаешь","Игры, блогеры, каналы, книги. Система разберёт, какой тип мышления за этим стоит, и покажет свою логику. Ты сам решишь, попала она или нет.")+
+  '<div class="label">Что потребляешь чаще всего</div><div class="vgrid" style="margin-top:10px">'+MEDIA.map(([id,t,d])=>'<button class="vcard '+(h.types.includes(id)?"on":"")+'" data-act="media" data-v="'+id+'"><b>'+t+'</b><span>'+d+'</span></button>').join("")+'</div>'+
+  '<div class="label">Любимые авторы, каналы, игры, студии</div><p class="sm">Кого ты смотришь или читаешь постоянно. Например: 3Blue1Brown, Factorio, Минаев, Kurzgesagt.</p>'+
+  '<div class="compose" style="margin-top:0"><input class="field" id="favin" placeholder="Название и Enter"><button class="btn ghost sm" data-act="favadd">Добавить</button></div>'+
+  '<div class="chips" style="margin-top:10px">'+h.favs.map((f,i)=>'<button class="chip on" data-act="favdel" data-i="'+i+'" aria-label="Убрать '+esc(f)+'">'+esc(f)+' ×</button>').join("")+'</div>'+
+  '<div class="actions" style="margin-top:20px"><button class="btn ghost sm" data-act="hobbyai" '+(h.types.length||h.favs.length?"":"disabled")+'>Разобрать с AI</button><span class="sm" id="hobbystatus"></span></div>'+
+  (ai?'<div class="panel" style="margin-top:14px"><div class="mono">Что увидела система</div><p style="margin:8px 0 0">'+esc(ai.comment)+'</p><ul>'+(ai.signals||[]).map(s=>'<li><b style="color:var(--ink)">'+esc(s.label)+'</b> → '+esc(RT[s.type]||s.type)+(s.why?": "+esc(s.why):"")+'</li>').join("")+'</ul><p class="sm" style="margin:12px 0 0">Каждый сигнал добавляет +3 к своему типу RIASEC. Не согласен — <button class="link" data-act="hobbyclear">убери разбор</button>.</p></div>':"")+
+  '<div class="actions"><button class="btn" data-act="next" '+(stepDone(6)?"":"disabled")+'>Дальше</button><button class="link" data-act="prev">Назад</button><button class="link" data-act="hobbyskip">Пропустить шаг</button></div>'}
+
+function w7(){const iv=S.interview;
+  if(iv.result){const r=iv.result;return stepHead("Что услышала система","Это интерпретация твоих ответов, а не приговор. Она добавляется к результатам анкеты, а не заменяет их.")+
+    '<div class="panel"><p style="margin:0;font-size:15.5px;line-height:1.6">'+esc(r.summary)+'</p><ul>'+(r.evidence||[]).map(e=>'<li>'+esc(e)+'</li>').join("")+'</ul></div>'+
+    (r.local?'<p class="note">AI сейчас недоступен, поэтому резюме собрано из анкеты. Расчёт направлений от этого не ломается.</p>':'<p class="note">Вклад разговора в расчёт — 10%. Его можно увидеть в разборе каждого направления.</p>')+
+    '<div class="actions"><button class="btn" data-act="finish">Собрать мой маршрут</button><button class="link" data-act="chatreset">Пройти разговор заново</button></div>'}
+  const qs=iv.turns.filter(t=>t.role==="q").length;
+  return stepHead("Разговор","Разговор ведёт система: она читает твой профиль, цепляется за сказанное и сама решает, куда копать и когда остановиться. Вопрос "+Math.max(1,qs)+", не больше 7.")+
+   '<div class="chat" id="chat">'+iv.turns.map(t=>'<div class="msg '+t.role+'">'+esc(t.text)+'</div>').join("")+'<div class="msg think" id="thinking" hidden>думает…</div></div>'+
+   '<div class="compose"><textarea class="field" id="ans" placeholder="Ответь своими словами. Примеры лучше общих фраз." '+(iv.waiting?"disabled":"")+'></textarea><button class="btn" data-act="answer" '+(iv.waiting?"disabled":"")+'>Ответить</button></div>'+
+   '<div class="actions" style="margin-top:16px"><button class="link" data-act="chatfinish" '+(iv.turns.filter(t=>t.role==="a").length>=2?"":"disabled")+'>Хватит, подведи итог</button><button class="link" data-act="prev">Назад</button><button class="link" data-act="chatskip">Пропустить разговор</button></div>'+
+   (iv.error?'<div class="warnbox">'+esc(iv.error)+'</div>':"")}
+
+function afterChatRender(){const iv=S.interview;if(iv.result)return;
+  if(!iv.turns.length&&!iv.waiting)askNext();
+  const c=$("#chat");if(c){const last=c.lastElementChild?.previousElementSibling;if(last&&iv.turns.length>1)last.scrollIntoView({block:"nearest"})}
+  $("#thinking")&&($("#thinking").hidden=!iv.waiting)}
+
+async function askNext(){
+  const iv=S.interview;const qn=iv.turns.filter(t=>t.role==="q").length;const an=iv.turns.filter(t=>t.role==="a").length;
+  if(qn>=7){return summarize()}
+  iv.waiting=true;iv.error=null;render();
+  const sample=aiOff?null:await getSample();
+  if(sample){
+    const transcript=iv.turns.map(t=>(t.role==="q"?"Интервьюер: ":"Ученик: ")+t.text).join("\n");
+    const prompt="Ты — внимательный профориентолог, который проводит короткое интервью со школьником из Казахстана на русском языке. Ниже его профиль из анкеты и разговор.\n\nПРОФИЛЬ:\n"+profileText()+"\n\nРАЗГОВОР:\n"+(transcript||"(ещё не начат)")+
+      "\n\nЗадай ОДИН следующий вопрос (вопрос номер "+(qn+1)+" из максимум 7). Правила: цепляйся за конкретные слова ученика и анкеты; проси примеры, а не мнения; проверяй противоречия между ответами; не повторяй уже заданное; 1–2 предложения, на «ты», без оценок и без советов. Если после 4+ ответов картина ясна, верни done=true.\n"+
+      'Ответь только JSON: {"question": "текст вопроса", "done": false}';
+    try{const r=await sample.json(prompt,{cache:false,modelTier:"default"});
+      if(r&&r.done&&an>=3){iv.waiting=false;return summarize()}
+      if(r&&r.question){iv.turns.push({role:"q",text:String(r.question)})}else throw {code:"invalid_json"}}
+    catch(e){if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e.code)){aiOff=true}
+      const q=fallbackQuestion(qn);if(q)iv.turns.push({role:"q",text:q});
+      if(e.code==="rate_limited")iv.error="Лимит обращений к Claude исчерпан, продолжаю с готовыми вопросами."}
+  }else{const q=fallbackQuestion(qn);if(q)iv.turns.push({role:"q",text:q})}
+  iv.waiting=false;render();setTimeout(()=>$("#ans")?.focus(),30)}
+
+async function summarize(){
+  const iv=S.interview;iv.waiting=true;render();
+  const sample=aiOff?null:await getSample();let res=null;
+  if(sample){const transcript=iv.turns.map(t=>(t.role==="q"?"Интервьюер: ":"Ученик: ")+t.text).join("\n");
+    const prompt="Ты — профориентолог. Подведи итог короткого интервью со школьником. Пиши по-русски, в третьем лице, используя имя, без диагнозов и без приговоров.\n\nПРОФИЛЬ:\n"+profileText()+"\n\nРАЗГОВОР:\n"+transcript+
+     "\n\nИдентификаторы направлений: "+DIRS.map(d=>d.id+" ("+d.name+")").join(", ")+
+     '\n\nВерни только JSON: {"summary":"3–5 предложений: как человек любит работать, что его заряжает, где сомнения","evidence":["2–3 коротких наблюдения, каждое со ссылкой на конкретный ответ"],"riasec_adjust":{"R":0,"I":0,"A":0,"S":0,"E":0,"C":0},"direction_bonus":{"<id>":0}}. riasec_adjust — целые от -10 до 10, только если разговор явно уточняет анкету. direction_bonus — целые от -10 до 10 только для направлений, о которых разговор даёт явные сигналы.';
+    try{res=await sample.json(prompt,{cache:false,modelTier:"default"});if(!res||!res.summary)res=null}catch(e){if(e.code==="not_granted")aiOff=true}}
+  iv.result=res||fallbackSummary();iv.done=true;iv.waiting=false;render();window.scrollTo({top:0,behavior:"smooth"})}
+
+async function hobbyAI(){
+  const st=$("#hobbystatus");st.textContent="Разбираю…";
+  const sample=aiOff?null:await getSample();
+  const h=S.hobbies;
+  if(!sample){st.textContent=ME?"AI пока не подключён: шаг можно пройти без разбора.":"AI-разбор доступен после входа в аккаунт. Шаг можно пройти и без него.";return}
+  const prompt="Школьник указал, что потребляет: "+h.types.map(t=>MEDIA.find(m=>m[0]===t)?.[1]).filter(Boolean).join(", ")+". Любимые авторы, игры, каналы: "+(h.favs.join(", ")||"не указаны")+
+   ".\nОпредели, какие типы мышления по модели Холланда (R,I,A,S,E,C) за этим стоят. Пиши по-русски, коротко. Если что-то не знаешь, не выдумывай.\n"+
+   'Верни только JSON: {"comment":"1–2 предложения общей гипотезы","signals":[{"label":"название из списка","type":"I","why":"почему, 5–10 слов"}]} — не больше 4 сигналов.';
+  try{const r=await sample.json(prompt,{modelTier:"quick"});if(r&&Array.isArray(r.signals)){r.signals=r.signals.filter(s=>RT[s.type]).slice(0,4);h.ai=r;render()}else st.textContent="Не получилось разобрать, попробуй ещё раз."}
+  catch(e){if(e.code==="not_granted"){aiOff=true;st.textContent="Доступ к Claude не разрешён: шаг можно пройти без разбора."}else st.textContent="Не получилось: "+(e.code==="rate_limited"?"слишком много запросов, попробуй позже.":"попробуй ещё раз.")}}
+
+/* -------- Results -------- */
+function radar(rs){
+  const cx=110,cy=110,R=78,top=[...RORDER].sort((a,b)=>rs[b]-rs[a])[0];
+  const ang=i=>(-90+i*60)*Math.PI/180;
+  const pt=(i,v)=>[cx+Math.cos(ang(i))*R*v/100,cy+Math.sin(ang(i))*R*v/100];
+  let g='';[25,50,75,100].forEach(l=>{g+='<polygon points="'+RORDER.map((_,i)=>pt(i,l).join(",")).join(" ")+'" fill="none" stroke="var(--line)" stroke-width="1"/>'});
+  RORDER.forEach((t,i)=>{const [x,y]=pt(i,100);g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="var(--line)"/>';const [lx,ly]=pt(i,118);g+='<text x="'+lx+'" y="'+(ly+4)+'" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="'+(t===top?"var(--accent)":"var(--muted)")+'">'+t+'</text>'});
+  g+='<polygon points="'+RORDER.map((t,i)=>pt(i,rs[t]).join(",")).join(" ")+'" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>';
+  const ti=RORDER.indexOf(top),[nx,ny]=pt(ti,rs[top]);
+  g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="var(--accent)" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="4" fill="var(--bg)" stroke="var(--ink)" stroke-width="1.5"/>';
+  return '<svg viewBox="0 0 220 220" role="img" aria-label="Роза интересов: ведущий тип '+RT[top]+'" style="width:100%;max-width:240px;display:block;margin:6px auto 0">'+g+'</svg>'}
+
+function vResults(){
+  if(!allDone())return gate();
+  const rs=riasecScores(),code=hollandCode(rs),ranked=rankDirs(),conf=confidence(),top=[...RORDER].sort((a,b)=>rs[b]-rs[a])[0];
+  const showAll=S._allDirs;const list=showAll?ranked:ranked.slice(0,5);
+  return '<div class="col wide fade"><div class="head-row"><span class="eyebrow">Лист 01<span class="m">твой рельеф</span></span><span class="mono">код '+code+' · сечение 6 осей</span></div>'+
+  '<h1 class="xl">Пять направлений<br>на твоей местности</h1><p class="lead">Это гипотезы, а не приговор. Порядок посчитан арифметикой по твоему профилю: каждую строчку расчёта можно развернуть и оспорить.</p>'+
+  '<div class="cards2"><div class="box tick"><div class="mono">Профиль интересов</div><div class="code">КОД '+code+'</div><div class="bars">'+
+  RORDER.map(t=>'<div class="bar '+(t===top?"top":"")+'"><span>'+RT[t]+'</span><span class="tr"><i style="width:'+rs[t]+'%"></i></span><span class="v">'+rs[t]+'</span></div>').join("")+'</div></div>'+
+  '<div class="box tick"><div class="mono">Роза интересов</div>'+radar(rs)+'</div></div>'+
+  '<div class="box tick" style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div><div class="mono">Насколько можно доверять расчёту</div><div class="mono" style="margin-top:10px">Уверенность профиля</div></div><div class="conf-num">'+conf.pct+'%</div></div>'+
+  '<div class="conf-bar"><i style="width:'+conf.pct+'%"></i></div><div class="checks">'+conf.c.map(([n,y])=>'<span class="'+(y?"y":"n")+'">'+n+'</span>').join("")+'</div></div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">02</span>Направления</h2><span class="mono">клик — развернуть разбор</span></div><p class="sm">Итог = сумма вкладов. Вес оси показывает, насколько она влияет; балл оси — насколько ты ей соответствуешь.</p>'+
+  list.map((x,i)=>dirRow(x,i)).join("")+
+  '<button class="link" data-act="alldirs">'+(showAll?"Показать только топ-5":"Показать все "+DIRS.length+" направлений")+'</button>'+
+  '<div class="actions"><button class="btn ghost sm" data-act="print">Скачать PDF / распечатать</button>'+(ME&&!READONLY?'<button class="btn ghost sm" data-act="nav" data-v="profile">Поделиться с родителями или ментором</button>':"")+'</div></div></div>'}
+function dirRow(x,i){const open=S.openDir===x.d.id;const chosen=S.chosen===x.d.id;
+  return '<div class="dir '+(open?"open":"")+'"><button class="dir-h" data-act="opendir" data-v="'+x.d.id+'" aria-expanded="'+open+'"><span class="i">0'+(i+1)+'</span><span><b>'+x.d.name+(chosen?' <span class="pill ok" style="font-size:10px;vertical-align:middle">основное</span>':"")+'</b><small>'+x.d.roles.split(",")[0]+' · ключевые: '+x.d.subj.slice(0,3).map(s=>SUBJ[s]).join(", ")+'</small></span><span class="meter"><i style="width:'+x.total+'%"></i></span><span class="score">'+x.total+'</span></button>'+
+  (open?'<div class="dir-b"><p class="sm" style="margin:0 0 12px">'+x.d.desc+'</p><div class="mono" style="margin-bottom:6px">Из чего сложился балл</div><div class="contrib"><div><span class="mono">ось</span><span class="mono" style="text-align:right">балл×вес</span><span class="mono" style="text-align:right">вклад</span></div>'+
+   x.parts.map(p=>'<div><span><b>'+p.name+'</b> · '+esc(p.why)+'</span><span class="w">'+r0(p.s)+'×'+p.w.toFixed(2)+'</span><span class="p">+'+p.pts.toFixed(1)+'</span></div>').join("")+'</div>'+
+   '<div class="mono" style="margin-bottom:6px">Зоны риска</div><div class="risks">'+(x.risks.length?x.risks.map(r=>'<div class="risk">'+esc(r)+'</div>').join(""):'<div class="risk ok">Явных рисков по анкете нет</div>')+'</div>'+
+   '<div class="actions" style="margin-top:6px"><button class="btn sm" data-act="godir" data-v="'+x.d.id+'">Разобрать направление</button><button class="btn ghost sm" data-act="choose" data-v="'+x.d.id+'">'+(chosen?"Выбрано основным ✓":"Выбрать основным")+'</button></div></div>':"")+'</div>'}
+function gate(){const n=maxReach();return '<div class="col fade"><div class="head-row"><span class="eyebrow">Пока закрыто</span></div><h1>Сначала пройди анкету</h1><p class="lead">Направления считаются из всех семи шагов. Сейчас открыт шаг '+n+' из 7.</p><button class="btn" data-act="nav" data-v="wizard">Продолжить анкету</button></div>'}
+
+/* -------- Direction -------- */
+function vDirection(){
+  if(!allDone())return gate();
+  const id=S.dir||S.chosen||rankDirs()[0].d.id;const d=DIR[id];const x=scoreDir(d);
+  const gaps=Object.entries(d.sk).map(([k,lv])=>({k,lv,h:S.skills[k]||0})).sort((a,b)=>(b.lv-b.h)-(a.lv-a.h));
+  const worst=gaps[0];const keyGr=d.subj.map(s=>[s,S.facts.grades[s]]);const weak=keyGr.filter(([,g])=>g&&g<=3).map(([s])=>SUBJ[s]);
+  const unis=rankUnis(id,"dir").slice(0,4);const ie=ieltsNum();
+  const needIelts=Math.max(...unis.map(x=>x.u.ielts||0),6.0);
+  const tlCard=(tag,t,p)=>'<div class="box tick"><div class="mono">'+tag+'</div><h3>'+t+'</h3><p>'+p+'</p></div>';
+  return '<div class="col wide fade"><button class="back" data-act="nav" data-v="results">← к списку направлений</button><div class="head-row"><span class="eyebrow">Лист 02<span class="m">разбор направления</span></span><span class="mono">балл '+x.total+' · '+x.parts.length+' оси</span></div>'+
+  '<h1 class="xl">'+d.name+'</h1><p class="lead">'+d.desc+'</p>'+
+  '<div class="actions" style="margin:0 0 6px"><button class="btn sm" data-act="choose" data-v="'+id+'">'+(S.chosen===id?"Основное направление ✓":"Выбрать как основное")+'</button><button class="btn ghost sm" data-act="unisfor" data-v="'+id+'">Все вузы по направлению</button></div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">01</span>Что нужно развить</h2><span class="mono">'+gaps.length+' позиций</span></div><p class="sm">Разрыв между тем, что требует направление, и тем, что ты отметил у себя. Заполненные деления — твой уровень, бледные — требуемый.</p>'+
+  gaps.map(g=>'<div class="gap box tick"><span class="nm">'+SK[g.k][1]+'<small>'+(SK[g.k][2]==="l"?"личное качество":"профессиональный")+'</small></span><span class="ticks">'+[1,2,3,4,5].map(i=>'<i class="'+(i<=g.h?"have":i<=g.lv?"req":"")+'"></i>').join("")+'</span><span class="v">'+g.h+' → '+g.lv+'</span></div>').join("")+'</div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">02</span>Твой маршрут</h2></div><p class="sm">Построен из того, что реально проседает у тебя, а не из общего списка советов.</p><div class="timeline">'+
+  '<div><div class="tl-h"><b>Прямо сейчас</b><span class="mono">ближайшие 1–2 месяца</span></div><div class="tl-cards">'+
+   tlCard("Учёба",weak.length?"Подтянуть: "+weak.join(", "):"Удержать уровень по профильным предметам",weak.length?"Это ключевые предметы направления, и сейчас по ним 3. Начни с одного: разбор ошибок последних контрольных и 30 минут задач в день.":"Для этого направления ключевые предметы — "+d.subj.map(s=>SUBJ[s]).join(", ")+". Они у тебя в порядке, задача — не просесть.")+
+   tlCard("Навыки","Начать с одного навыка: "+SK[worst.k][1].toLowerCase(),"Сейчас у тебя "+worst.h+" из 5, нужно "+worst.lv+". Не берись за всё сразу: один навык за раз даёт результат быстрее.")+
+   tlCard("Проекты","Сделать один маленький проект по теме",d.project+" Это одновременно проверка гипотезы: понравится ли тебе сам процесс.")+'</div></div>'+
+  '<div><div class="tl-h"><b>До поступления</b><span class="mono">до подачи документов</span></div><div class="tl-cards">'+
+   tlCard("Экзамены",ie>=needIelts?"IELTS "+ie+" уже закрывает требования":"IELTS: цель "+needIelts.toFixed(1),ie>=needIelts?"Подходящие вузы из твоего списка требуют до "+needIelts.toFixed(1)+". Если есть время, повышение балла добавит шансов на стипендии.":"Подходящие вузы из твоего списка требуют до "+needIelts.toFixed(1)+". Заложи 3–6 месяцев подготовки и пробный тест заранее."+(unis.some(x=>x.u.sat)?" Для вузов США также нужен SAT.":""))+
+   tlCard("Портфолио","Олимпиады и конкурсы",d.olymp)+
+   tlCard("Вузы","Короткий список из 6–8 вузов","Смешай уровни: 2 мечты, 3 реальных, 2 надёжных. Ниже — лучшие совпадения по твоему профилю.")+'</div></div>'+
+  '<div><div class="tl-h"><b>После поступления</b><span class="mono">1–2 курс</span></div><div class="tl-cards">'+
+   tlCard("Навыки","Закрыть оставшиеся профессиональные пробелы","К этому моменту стоит выйти на рабочий уровень по: "+gaps.slice(0,4).map(g=>SK[g.k][1].toLowerCase()).join(", ")+".")+
+   tlCard("Проекты","Первая практика или стажировка","Типичные роли на выходе: "+d.roles+". Первый опыт лучше получить до выпускного курса.")+'</div></div></div></div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">03</span>Где этому учат</h2><span class="mono">по Fit Score</span></div>'+
+  (unis.length?'<div class="unis-mini">'+unis.map(x=>'<button data-act="gouni" data-v="'+x.u.id+'"><b>'+x.u.name+'</b><span class="mono">'+x.u.city+', '+x.u.country+' · fit '+x.score+'</span></button>').join("")+'</div>':'<div class="empty">В каталоге пока нет вузов с этим направлением.</div>')+
+  '<div class="actions"><button class="btn" data-act="choose" data-v="'+id+'">'+(S.chosen===id?"Основное направление ✓":"Выбрать как основное направление")+'</button><button class="btn ghost" data-act="unisfor" data-v="'+id+'">Все университеты</button><button class="btn ghost" data-act="print">Скачать PDF</button></div></div></div>'}
+
+/* -------- Universities -------- */
+function vUnis(){
+  if(!allDone())return gate();
+  const dirId=S.dir||S.chosen||rankDirs()[0].d.id;const d=DIR[dirId];const list=rankUnis(dirId,S.uniFilter);
+  return '<div class="col wide fade"><div class="head-row"><span class="eyebrow">Лист 03<span class="m">университеты</span></span><span class="mono">'+list.length+' в подборке</span></div>'+
+  '<h1 class="xl">Куда это ведёт</h1><p class="lead">Порядок считает то, что ты двигаешь, и направления: твои приоритеты умножаются на то, насколько университет им отвечает. Совпадения и расхождения показаны построчно.</p>'+
+  '<div class="filters"><span class="mono">Направление:</span><select class="field" style="width:auto;padding:7px 10px" id="dirsel">'+DIRS.map(x=>'<option value="'+x.id+'" '+(x.id===dirId?"selected":"")+'>'+x.name+'</option>').join("")+'</select>'+
+  [["dir","С программой"],["country","Мои страны"],["all","Все"]].map(([k,l])=>'<button class="chip '+(S.uniFilter===k?"on":"")+'" data-act="ufilter" data-v="'+k+'">'+l+'</button>').join("")+'</div>'+
+  '<div class="sec-h" style="margin-top:8px"><h2><span class="n">01</span>Ранжирование</h2><span class="mono">'+esc(d.name)+'</span></div>'+
+  (list.length?list.map((x,i)=>uniRow(x,i,dirId)).join(""):'<div class="empty">Ничего не нашлось с этим фильтром. Попробуй «Все».</div>')+
+  '<p class="sm" style="margin-top:18px">Стоимость, требования и рейтинги ориентировочные (QS World University Rankings, примерно). Перед подачей проверяй на сайте вуза.</p></div>'}
+function uniRow(x,i,dirId){const open=S.openUni===x.u.id;const u=x.u;
+  return '<div class="uni '+(open?"open":"")+'"><button class="uni-h" data-act="openuni" data-v="'+u.id+'" aria-expanded="'+open+'"><span class="i mono">'+String(i+1).padStart(2,"0")+'</span><span><b>'+u.name+'</b><small>'+u.city+', '+u.country+(u.rank?' · QS ≈ #'+u.rank:"")+'</small></span><span class="meter"><i style="width:'+x.score+'%"></i></span><span class="score">'+x.score+'</span></button>'+
+  (open?'<div class="uni-b"><div><div class="mono" style="margin-bottom:8px">Что совпало</div><div class="fl">'+x.items.filter(it=>it.state==="y").map(fl).join("")+'</div></div><div><div class="mono" style="margin-bottom:8px">Что не совпало</div><div class="fl">'+(x.items.filter(it=>it.state!=="y").map(fl).join("")||'<div><span class="s y">✓</span><span>Расхождений нет</span><span></span></div>')+x.risks.map(r=>'<div><span class="s w">!</span><span>'+esc(r)+'</span><span class="wt">риск</span></div>').join("")+'</div></div>'+
+   '<div class="actions" style="margin-top:4px;grid-column:1/-1"><button class="btn sm" data-act="gouni" data-v="'+u.id+'">Открыть профиль университета</button><button class="btn ghost sm" data-act="nav" data-v="results">К направлениям</button></div></div>':"")+'</div>'}
+const fl=it=>'<div><span class="s '+it.state+'">'+(it.state==="y"?"✓":it.state==="w"?"!":"✗")+'</span><span>'+esc(it.txt)+'</span><span class="wt">вес '+it.w+'</span></div>';
+
+function vUni(){
+  const u=UNI[S.uni];if(!u)return vUnis();const dirId=S.dir||S.chosen||rankDirs()[0].d.id;const x=scoreUni(u,dirId);
+  const cls=x.score>=70?"ok":x.score>=45?"mid":"low",lbl=x.score>=70?"Сильное совпадение":x.score>=45?"Частичное совпадение":"Слабое совпадение";
+  const C=2*Math.PI*56,ring=(s)=>'<div class="ring"><svg viewBox="0 0 130 130"><circle cx="65" cy="65" r="56" fill="none" stroke="var(--line)" stroke-width="9"/><circle cx="65" cy="65" r="56" fill="none" stroke="var(--accent)" stroke-width="9" stroke-dasharray="'+(C*s/100)+' '+C+'"/></svg><div><b>'+s+'</b><small>FIT</small></div></div>';
+  const ck=S.check[u.id]||{};
+  const docs=[["transcript","Транскрипт оценок за 9–11 классы (с переводом)"],["passport","Загранпаспорт"],["ielts",u.ielts?"IELTS не ниже "+u.ielts:"Сертификат ЕНТ"],["essay","Мотивационное письмо / эссе"],["recs","Рекомендательные письма (1–2)"],["portfolio","Портфолио проектов и олимпиад"]];
+  if(u.sat)docs.push(["sat","SAT/ACT"]);
+  const done=docs.filter(d=>ck[d[0]]).length;
+  const ai=S.aiUni[u.id];
+  return '<div class="hero" style="--h:'+u.hue+'"><canvas id="herocv" aria-hidden="true"></canvas><button class="back" style="color:rgba(255,255,255,.75)" data-act="nav" data-v="unis">← к списку вузов</button>'+
+  '<div class="mono">'+(u.rank?"QS ≈ #"+u.rank:"Национальный рейтинг")+'</div><h1>'+u.name+'</h1><div class="meta"><span>⌖ '+u.city+', '+u.country+'</span><span>Осн. '+u.est+'</span><span>'+u.type+'</span></div><div class="tags">'+u.tags.map(t=>'<span>'+t+'</span>').join("")+'</div></div>'+
+  '<div class="col wide fade"><div class="ucard"><div class="white"><div class="fit">'+ring(x.score)+'<div><div class="eyebrow">Разбор совпадения</div><h3 style="font-size:18px;margin:4px 0 8px">Как '+u.name.split(" (")[0]+' подходит твоему профилю</h3><span class="pill '+cls+'">'+lbl+' · '+x.score+'</span>'+
+   '<div class="cols2"><div><div class="mono" style="margin-bottom:8px;color:var(--ok)">✓ Почему подходит</div><div class="fl">'+(x.items.filter(i=>i.state==="y").map(fl).join("")||'<div><span></span><span class="sm">Совпадений мало</span><span></span></div>')+'</div></div>'+
+   '<div><div class="mono" style="margin-bottom:8px;color:var(--warn)">Разрывы и риски</div><div class="fl">'+(x.items.filter(i=>i.state!=="y").map(fl).join("")+x.risks.map(r=>'<div><span class="s w">!</span><span>'+esc(r)+'</span><span class="wt">риск</span></div>').join("")||'<div><span class="s y">✓</span><span>Разрывов по твоим данным нет. Проверь актуальные требования на сайте вуза.</span><span></span></div>')+'</div></div></div></div></div></div>'+
+  '<div class="white"><div class="mono" style="margin-bottom:12px">Коротко</div><div class="facts"><div><span>Город</span><b>'+u.city+'</b></div><div><span>Стоимость в год</span><b>'+(u.tuition?"~$"+u.tuition.toLocaleString("ru-RU"):"грант")+'</b></div><div><span>Мин. GPA</span><b>'+u.gpa+' / 4.0</b></div><div><span>IELTS</span><b>'+(u.ielts||"не нужен")+'</b></div>'+(u.sat?'<div><span>SAT</span><b>нужен</b></div>':"")+'<div><span>Направления</span><b>'+u.p.length+'</b></div></div>'+
+   '<p class="sm" style="margin:14px 0 4px"><b style="color:var(--ink)">Стипендии:</b> '+esc(u.aid)+'</p><p class="sm" style="margin:0 0 12px"><b style="color:var(--ink)">Сроки:</b> '+esc(u.dl)+'</p><a href="'+u.site+'" target="_blank" rel="noopener">Официальный сайт →</a></div></div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">01</span>Программы, которые тебе подходят</h2></div><div class="chips">'+u.p.map(p=>'<button class="chip '+(p===dirId?"on":"")+'" data-act="godir" data-v="'+p+'">'+DIR[p].name+'</button>').join("")+'</div></div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">02</span>Чек-лист поступления</h2><span class="mono">'+done+' / '+docs.length+' готово</span></div><p class="sm">Отмечай, что уже собрал. Сохраняется в этом браузере.</p><div class="todo">'+docs.map(([k,t])=>'<label class="'+(ck[k]?"done":"")+'"><input type="checkbox" data-act="check" data-u="'+u.id+'" data-k="'+k+'" '+(ck[k]?"checked":"")+'><span>'+t+'</span></label>').join("")+'</div></div>'+
+  '<div class="sec"><div class="sec-h"><h2><span class="n">03</span>Что усилить в заявке</h2><span class="mono">AI-совет</span></div><p class="sm">Claude посмотрит на твой профиль и требования вуза и предложит 3 конкретных шага.</p>'+
+   '<button class="btn ghost sm" data-act="aiuni" data-v="'+u.id+'" id="aiunibtn">'+(ai?"Спросить заново":"Получить совет")+'</button><div class="ai-out" id="aiuniout">'+(ai?esc(ai):"")+'</div></div></div>'}
+
+async function aiUni(id){
+  const u=UNI[id],out=$("#aiuniout"),btn=$("#aiunibtn");out.textContent="Думаю…";btn.disabled=true;
+  const sample=await getSample();if(!sample){out.textContent=ME?"AI пока не подключён к сайту. Совет появится, когда его включат.":"Совет от AI доступен после входа в аккаунт.";btn.disabled=false;return}
+  const x=scoreUni(u,S.dir||S.chosen);
+  const prompt="Ты — консультант по поступлению за рубеж для школьников из Казахстана. Пиши по-русски, на «ты», конкретно, без воды.\n\nПРОФИЛЬ:\n"+profileText()+"\nGPA (4.0): "+gpa4()+", IELTS: "+S.facts.ielts+", SAT: "+(S.facts.sat||"нет")+", бюджет: "+budgetLabel(S.facts.budget)+
+   "\n\nВУЗ: "+u.name+" ("+u.city+", "+u.country+"). Требования (ориентир): GPA "+u.gpa+", IELTS "+(u.ielts||"не нужен")+(u.sat?", SAT нужен":"")+". Стипендии: "+u.aid+". "+(u.riskNote||"")+"\nРасхождения: "+x.items.filter(i=>i.state!=="y").map(i=>i.txt).join("; ")+
+   "\n\nДай ровно 3 пронумерованных шага, что сделать в ближайшие месяцы, чтобы усилить заявку именно в этот вуз. Каждый шаг — 1–2 предложения. В конце одна строка: что проверить на официальном сайте.";
+  try{await sample(prompt,{onText:({text})=>{out.textContent=text}}).then(r=>{S.aiUni[id]=r.text;save()})}
+  catch(e){out.textContent=e.code==="not_granted"?"Доступ к Claude не разрешён.":e.code==="rate_limited"?"Слишком много запросов, попробуй позже.":(e.text||"Не получилось, попробуй ещё раз.")}
+  btn.disabled=false}
+
+/* -------- Profile -------- */
+function vProfile(){
+  const rs=riasecScores(),{ord}=valueRanks();const g=gpa4();
+  const shareUrl=ME&&ME.shareToken?location.origin+"/r/"+ME.shareToken:"";
+  const account=ME?
+   '<div class="sec"><div class="sec-h"><h2>Аккаунт</h2><span class="saved"></span></div><p class="sm">'+esc(ME.email)+'</p>'+
+   '<div class="stack2"><label class="sm" for="pname">Имя</label><div class="copyrow" style="margin:0"><input class="field" id="pname" value="'+esc(ME.name)+'"><button class="btn ghost sm" data-act="rename">Сохранить</button></div></div></div>'+
+   '<div class="sec"><div class="sec-h"><h2>Поделиться результатом</h2></div><p class="sm">Ссылка открывает твои направления, маршрут и вузы в режиме просмотра. Удобно отправить родителям, ментору или учителю. Изменить ответы по ссылке нельзя.</p>'+
+   (shareUrl?'<div class="copyrow"><input class="field" id="shareurl" readonly value="'+esc(shareUrl)+'"><button class="btn sm" data-act="copyshare">Копировать</button></div><div class="actions" style="margin-top:10px"><a class="btn ghost sm" href="'+esc(shareUrl)+'" target="_blank" rel="noopener">Открыть</a><button class="link" data-act="unshare">Отключить ссылку</button></div>'
+    :'<div class="actions" style="margin-top:0"><button class="btn sm" data-act="share" '+(allDone()?"":"disabled")+'>Создать ссылку</button>'+(allDone()?"":'<span class="sm">сначала пройди анкету</span>')+'</div>')+'</div>'+
+   '<div class="sec"><div class="sec-h"><h2>Пароль</h2></div><form class="stack2" id="pwform"><input class="field" type="password" id="pwold" autocomplete="current-password" placeholder="Текущий пароль"><input class="field" type="password" id="pwnew" autocomplete="new-password" placeholder="Новый пароль, минимум 8 символов"><button class="btn ghost sm" type="submit" style="justify-self:start">Сменить пароль</button></form></div>'
+   :'<div class="sec"><div class="sec-h"><h2>Аккаунт</h2></div><p class="sm">Ты не вошёл. Ответы хранятся только в этом браузере. С аккаунтом они будут доступны с любого устройства, и появится ссылка, чтобы показать результат родителям или ментору.</p><button class="btn" data-act="toauth">Создать аккаунт или войти</button></div>';
+  return '<div class="col fade"><div class="head-row"><span class="eyebrow">Профиль</span><span class="saved"></span></div><h1>'+esc(S.user?.name||"")+'</h1><p class="lead">'+(S.user?.city?esc(S.user.city)+" · ":"")+(S.facts.grade?S.facts.grade+" класс":"класс не указан")+(g!==null?" · GPA ≈ "+g.toFixed(2)+" / 4.0":"")+'</p>'+
+  '<div class="cards2"><div class="box tick"><div class="mono">Интересы</div><div class="code">КОД '+hollandCode(rs)+'</div><div class="bars">'+RORDER.map(t=>'<div class="bar"><span>'+RT[t]+'</span><span class="tr"><i style="width:'+rs[t]+'%"></i></span><span class="v">'+rs[t]+'</span></div>').join("")+'</div></div>'+
+  '<div class="box tick"><div class="mono">Ценности</div><ol style="margin:12px 0 0;padding-left:20px;display:grid;gap:6px">'+(ord.length?ord.map(v=>'<li>'+VAL[v][1]+'</li>').join(""):'<li class="sm">ещё не выбраны</li>')+'</ol></div></div>'+
+  (S.chosen?'<div class="box tick" style="margin-top:14px"><div class="mono">Основное направление</div><h3 style="margin-top:6px;font-size:20px">'+DIR[S.chosen].name+'</h3><div class="actions" style="margin-top:12px"><button class="btn sm" data-act="godir" data-v="'+S.chosen+'">Открыть маршрут</button></div></div>':"")+
+  account+
+  '<div class="sec"><div class="sec-h"><h2>Ответы</h2></div><p class="sm">Можно поменять любые ответы: расчёт обновится сам. Сброс удалит ответы, но не аккаунт.</p>'+
+  (S._confirmReset?'<div class="warnbox">Удалить все ответы анкеты? Это нельзя отменить.<div class="actions" style="margin-top:10px"><button class="btn sm" data-act="resetyes">Да, удалить ответы</button><button class="link" data-act="resetno">Отмена</button></div></div>':'<div class="actions" style="margin-top:0"><button class="btn ghost sm" data-act="nav" data-v="wizard">Изменить ответы</button><button class="btn ghost sm" data-act="reset">Сбросить ответы</button></div>')+'</div>'+
+  (ME?'<div class="sec"><div class="sec-h"><h2>Выход</h2></div><div class="actions" style="margin-top:0"><button class="btn ghost sm" data-act="logout">Выйти из аккаунта</button><button class="link" data-act="delask">Удалить аккаунт</button></div>'+
+   (S._confirmDel?'<form class="warnbox stack2" id="delform" style="max-width:none">Аккаунт и все ответы будут удалены навсегда. Введи пароль для подтверждения.<input class="field" type="password" id="delpw" autocomplete="current-password" placeholder="Пароль"><div class="actions" style="margin-top:0"><button class="btn sm" type="submit">Удалить навсегда</button><button class="link" type="button" data-act="delno">Отмена</button></div></form>':"")+'</div>':"")+
+  '</div>'}
+/* ============================== HINTS ============================== */
+const HINTS={start:["Это займёт 15–20 минут. Прогресс сохраняется, можно вернуться позже.","Хочешь сначала посмотреть, как выглядит результат? Нажми «Посмотреть на примере профиля»."],
+ wizard:["Заполняй честно: здесь нет правильных ответов.","Вернуться к любому пройденному шагу можно через полосу сверху.","Расчёт прозрачный: в конце каждую цифру можно развернуть."],
+ results:["Нажми на направление, чтобы увидеть вклад каждой оси и зоны риска.","Порядок — это гипотеза. Выбери одно направление основным: так откроется маршрут и подбор вузов."],
+ direction:["Сначала посмотри разрыв навыков, затем выбери направление — так откроется маршрут.","Начни с карточек «Прямо сейчас»: они рассчитаны на 1–2 месяца."],
+ unis:["Разверни вуз: совпадения и расхождения показаны отдельно.","Стоимость и требования ориентировочные. Перед подачей проверяй на сайте вуза."],
+ uni:["Отмечай документы в чек-листе по мере готовности.","Кнопка «Получить совет» спросит Claude, что усилить в заявке именно сюда."],profile:["Здесь собран твой профиль. Его можно сбросить и пройти заново."]};
+let hintI={};
+function renderHint(){const k=S.view;const h=HINTS[k];if(!h||S.hintOff[k]){$("#hint").innerHTML="";return}const i=(hintI[k]||0)%h.length;
+  $("#hint").innerHTML='<div class="hint" role="note">'+svg("bulb")+'<button class="x" data-act="hintx" aria-label="Скрыть подсказку">×</button><div class="mono">Подсказка · '+(i+1)+'/'+h.length+'</div><p>'+h[i]+'</p>'+(h.length>1?'<button class="nx" data-act="hintn">Следующая ›</button>':"")+'</div>';
+  if(innerWidth<760){clearTimeout(renderHint.t);renderHint.t=setTimeout(()=>{const el=$("#hint .hint");if(el)el.remove()},7000)}}
+
+/* ============================== EVENTS ============================== */
+function go(view,extra){Object.assign(S,extra||{});S.view=view;S._confirmReset=false;render();window.scrollTo({top:0})}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act]");if(!t||t.disabled)return;const a=t.dataset.act,v=t.dataset.v;
+  const f=S.facts;
+  if(READONLY&&!["nav","opendir","godir","openuni","gouni","unisfor","ufilter","alldirs","theme","hintx","hintn","print"].includes(a)){toast("Это режим просмотра");return}
+  switch(a){
+   case"authmode":S._auth=v;S._err="";render();setTimeout(()=>(v==="login"?$("#em"):$("#nm"))?.focus(),0);break;
+   case"guest":S=blank();S.user={name:"Гость",city:""};S._askName=true;go("wizard",{step:1});break;
+   case"backguest":go("wizard");break;
+   case"toauth":S._auth="register";S._err="";go("auth");break;
+   case"exitdemo":S=blank();try{localStorage.removeItem(KEY)}catch(_){}if(ME){API.j("GET","/api/me").then(d=>{S=d.state&&d.state.user?Object.assign(blank(),d.state):Object.assign(blank(),{user:{name:ME.name,city:""}});go(allDone()?"results":"wizard")})}else go("start");break;
+   case"demo":loadDemo();break;
+   case"print":window.print();break;
+   case"share":API.j("POST","/api/share").then(d=>{ME.shareToken=d.shareToken;render();toast("Ссылка создана")}).catch(er=>toast(er.message));break;
+   case"unshare":API.j("DELETE","/api/share").then(()=>{ME.shareToken=null;render();toast("Ссылка отключена: по ней больше нельзя открыть профиль")}).catch(er=>toast(er.message));break;
+   case"copyshare":{const i=$("#shareurl");navigator.clipboard?.writeText(i.value).then(()=>toast("Ссылка скопирована"),()=>{i.select();toast("Выделил ссылку: нажми Ctrl+C")});break}
+   case"rename":{const n=$("#pname").value.trim();if(!n)return;API.j("PUT","/api/account",{name:n}).then(d=>{ME=d.user;S.user.name=n;render();toast("Имя сохранено")}).catch(er=>toast(er.message));break}
+   case"logout":API.j("POST","/api/logout").finally(()=>{ME=null;S=blank();try{localStorage.removeItem(KEY)}catch(_){}go("start");toast("Ты вышел из аккаунта")});break;
+   case"delask":S._confirmDel=true;render();setTimeout(()=>$("#delpw")?.focus(),0);break;
+   case"delno":S._confirmDel=false;render();break;
+   case"nav":if(v==="chat"){go("wizard",{step:7})}else if(v==="direction"){go("direction",{dir:S.chosen})}else go(v);break;
+   case"theme":{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";try{localStorage.setItem("compass.theme",r.dataset.theme)}catch(_){}drawTopo();if(S.view==="uni")drawHero();break}
+   case"step":S.step=+t.dataset.n;render();window.scrollTo({top:0});break;
+   case"next":if(S.step<7){S.step++;render();window.scrollTo({top:0})}break;
+   case"prev":if(S.step>1){S.step--;render();window.scrollTo({top:0})}break;
+   case"grade":f.grade=v;render();break;
+   case"gr":{const s=t.dataset.s,g=+v;if(f.grades[s]===g)delete f.grades[s];else f.grades[s]=g;render();break}
+   case"country":f.countries=f.countries.includes(v)?f.countries.filter(c=>c!==v):[...f.countries,v];render();break;
+   case"budget":f.budget=+v;render();break;
+   case"ielts":f.ielts=v;render();break;
+   case"lik":S.riasec[t.dataset.i]=+v;render();nextUnanswered(".q");break;
+   case"v10":{const s=S.values;if(s.ten.includes(v)){s.ten=s.ten.filter(x=>x!==v);s.five=s.five.filter(x=>x!==v);s.duels={}}else if(s.ten.length<10)s.ten.push(v);render();break}
+   case"v5":{const s=S.values;if(s.five.includes(v))s.five=s.five.filter(x=>x!==v);else if(s.five.length<5)s.five.push(v);s.duels={};render();break}
+   case"vphase":S.values.phase=v;render();window.scrollTo({top:0});break;
+   case"duel":S.values.duels[t.dataset.a+"|"+t.dataset.b]=t.dataset.w;render();break;
+   case"vreset":S.values.duels={};render();break;
+   case"sk":S.skills[t.dataset.s]=+v;render();nextUnanswered(".row");break;
+   case"media":{const h=S.hobbies;h.types=h.types.includes(v)?h.types.filter(x=>x!==v):[...h.types,v];render();break}
+   case"favadd":addFav();break;
+   case"favdel":S.hobbies.favs.splice(+t.dataset.i,1);render();break;
+   case"hobbyai":hobbyAI();break;
+   case"hobbyclear":S.hobbies.ai=null;render();break;
+   case"hobbyskip":S.hobbies.skipped=true;S.step=7;render();window.scrollTo({top:0});break;
+   case"answer":sendAnswer();break;
+   case"chatfinish":summarize();break;
+   case"chatskip":S.interview.skipped=true;S.interview.result=null;go("results");break;
+   case"chatreset":S.interview={turns:[],done:false,result:null,skipped:false};render();break;
+   case"finish":go("results");break;
+   case"alldirs":S._allDirs=!S._allDirs;render();break;
+   case"opendir":S.openDir=S.openDir===v?null:v;render();break;
+   case"godir":go("direction",{dir:v});break;
+   case"choose":S.chosen=v;S.dir=v;toast("«"+DIR[v].name+"» — основное направление");render();break;
+   case"unisfor":go("unis",{dir:v,uniFilter:"dir"});break;
+   case"ufilter":S.uniFilter=v;render();break;
+   case"openuni":S.openUni=S.openUni===v?null:v;render();break;
+   case"gouni":go("uni",{uni:v});break;
+   case"aiuni":aiUni(v);break;
+   case"reset":S._confirmReset=true;render();break;
+   case"resetno":S._confirmReset=false;render();break;
+   case"resetyes":{const u=S.user&&!S.user.demo?{name:S.user.name,city:S.user.city}:null;S=blank();S.user=u;S.view=u?"wizard":"start";try{localStorage.removeItem(KEY)}catch(_){}render();window.scrollTo({top:0});toast("Ответы сброшены");break}
+   case"hintx":S.hintOff[S.view]=true;renderHint();save();break;
+   case"hintn":hintI[S.view]=(hintI[S.view]||0)+1;renderHint();break;
+  }});
+document.addEventListener("submit",e=>{const id=e.target.id;e.preventDefault();
+  if(id==="authform")submitAuth();
+  if(id==="pwform"){const o=$("#pwold").value,n=$("#pwnew").value;if(n.length<8){toast("Новый пароль должен быть не короче 8 символов");return}
+    API.j("PUT","/api/account",{password:o,newPassword:n}).then(()=>{$("#pwold").value="";$("#pwnew").value="";toast("Пароль изменён")}).catch(er=>toast(er.message))}
+  if(id==="delform"){API.j("DELETE","/api/account",{password:$("#delpw").value}).then(()=>{ME=null;S=blank();try{localStorage.removeItem(KEY)}catch(_){}go("start");toast("Аккаунт удалён")}).catch(er=>toast(er.message))}});
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.dataset.act==="check"){const c=S.check[t.dataset.u]=S.check[t.dataset.u]||{};c[t.dataset.k]=t.checked;render()}
+  if(t.id==="dirsel"){S.dir=t.value;S.openUni=null;render()}});
+document.addEventListener("input",e=>{const t=e.target;
+  if(t.dataset.in==="open"){S.open[t.dataset.k]=t.value;save();const ok=stepDone(5);const b=document.querySelector('[data-act="next"]');if(b)b.disabled=!ok;const h=$("#openhint");if(h)h.textContent=ok?"":"нужно минимум два ответа";renderRail()}
+  if(t.id==="sat"){S.facts.sat=t.value.replace(/\D/g,"").slice(0,4);save()}
+  if(t.id==="nm"){S._draftName=t.value}
+  if(t.id==="gname"){S.user.name=t.value.slice(0,60)||"Гость";save()}
+  if(t.id==="gcity"){S.user.city=t.value.slice(0,60);save()}});
+document.addEventListener("keydown",e=>{
+  if(e.target.id==="favin"&&e.key==="Enter"){e.preventDefault();addFav()}
+  if(e.target.id==="ans"&&e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();sendAnswer()}
+});
+function addFav(){const i=$("#favin");const v=i.value.trim();if(!v)return;if(!S.hobbies.favs.includes(v))S.hobbies.favs.push(v.slice(0,60));i.value="";render();setTimeout(()=>$("#favin")?.focus(),0)}
+function sendAnswer(){const a=$("#ans");const v=(a.value||"").trim();if(!v||S.interview.waiting)return;S.interview.turns.push({role:"a",text:v.slice(0,1200)});askNext()}
+
+/* ============================== DEMO ============================== */
+function loadDemo(){
+  S=blank();S.user={name:"Алия (пример)",city:"Астана",demo:true};
+  Object.assign(S.facts,{grade:"11",grades:{math:5,phys:4,chem:4,bio:4,cs:5,eng:4,hist:4,geo:4,lit:4,art:3},countries:["Казахстан","Германия","Швейцария","Сингапур"],budget:12000,ielts:"6.0",sat:""});
+  [4,4,2,4,3,3,2,5,3,4,3,4,4,5,3,3,3,5].forEach((v,i)=>S.riasec[i]=v);
+  S.values={ten:["autonomy","create","expert","income","demand","team","impact","learning","remote","variety"],five:["autonomy","create","expert","demand","learning"],duels:{},phase:"duel"};
+  const pref=["expert","create","autonomy","learning","demand"];pairs(S.values.five).forEach(([a,b])=>S.values.duels[a+"|"+b]=pref.indexOf(a)<pref.indexOf(b)?a:b);
+  Object.assign(S.skills,{logic:3,discrete:3,coding:3,systems:3,stats:3,physics:3,hands:2,cad:1,biology:2,chemistry:2,lab:1,writing:2,finlit:2,business:1,design:2,english:3,public:2,empathy:3,persistence:0});
+  S.open={q1:"В детстве строила сложные города и автоматические фермы в Minecraft, постоянно улучшала систему.",q2:"Сейчас могу часами разбирать алгоритмы, визуализации данных и устройство нейросетей.",q3:"Быстро нахожу закономерности и умею объяснить сложную идею простым словами.",q4:"Работаю в исследовательской команде, днём пишу код и проверяю гипотезы, вечером свободна."};
+  S.hobbies={types:["science","games","podcasts"],favs:["3Blue1Brown","Factorio"],ai:{comment:"Любит системы, которые можно оптимизировать, и объяснения через визуализацию.",signals:[{label:"Factorio",type:"I",why:"оптимизация производственных цепочек"},{label:"3Blue1Brown",type:"I",why:"математика через визуальные модели"}]}};
+  S.interview={turns:[
+   {role:"q",text:"Ты упомянула, что в детстве строила сложные города и автоматические фермы в Minecraft. Что именно тебе тогда больше всего нравилось в этом процессе?"},
+   {role:"a",text:"Я собирала в Factorio автоматическую линию и потеряла счёт времени, потому что хотелось убрать каждое узкое место."},
+   {role:"q",text:"Что ты чувствовала, когда удавалось решить узкое место? Это чувство радости или удовлетворение от результата?"},
+   {role:"a",text:"Сложнее всего было понять, почему система периодически останавливается. Я проверяла гипотезы по одной."},
+   {role:"q",text:"Как ты выбираешь, кому объяснять свои решения? Бывают ли случаи, когда не хочешь делиться находками?"},
+   {role:"a",text:"Обычно сначала разбираюсь сама, а потом объясняю решение друзьям через схему или простой пример."},
+   {role:"q",text:"Как ты планируешь применять свои навыки анализа и оптимизации в будущем?"},
+   {role:"a",text:"Мне важнее исследовать и создавать работающую систему, чем просто руководить людьми или следовать инструкциям."}],
+   done:true,skipped:false,result:{summary:"Алия любит работать с системами, анализируя и оптимизируя их до устойчивой работы. Она получает удовлетворение от решения сложных задач и объяснения своих находок другим. Однако ей не всегда интересно делиться идеями, если она не уверена в их качестве. Алия предпочитает исследовательскую работу, а не роль руководителя.",
+   evidence:["Предпочитает исследовать и создавать работающие системы — это подтверждает исследовательский интерес.","Получает удовольствие от объяснения сложных идей простыми словами — сильная коммуникативная сторона."],riasec_adjust:{I:6,C:3,E:-3},direction_bonus:{cs:8,ds:6,se:2,mgmt:-4}}};
+  S.view="results";S.step=7;S.chosen="cs";S.dir="cs";S.openDir="cs";render();window.scrollTo({top:0});toast("Загружен пример: профиль Алии")}
+
+/* ============================== TOPO BACKGROUND ============================== */
+function noise(seed){const p=new Uint8Array(512);let s=seed;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;const perm=[...Array(256).keys()].sort(()=>rnd()-.5);for(let i=0;i<512;i++)p[i]=perm[i&255];
+  const g=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];const fade=t=>t*t*t*(t*(t*6-15)+10);
+  return (x,y)=>{const X=Math.floor(x)&255,Y=Math.floor(y)&255;x-=Math.floor(x);y-=Math.floor(y);const u=fade(x),v=fade(y);
+    const d=(h,a,b)=>{const q=g[h&7];return q[0]*a+q[1]*b};const aa=p[p[X]+Y],ab=p[p[X]+Y+1],ba=p[p[X+1]+Y],bb=p[p[X+1]+Y+1];
+    const l1=d(aa,x,y)+u*(d(ba,x-1,y)-d(aa,x,y)),l2=d(ab,x,y-1)+u*(d(bb,x-1,y-1)-d(ab,x,y-1));return l1+v*(l2-l1)}}
+function contours(ctx,W,H,cell,fn,levels,color,lw){
+  const cols=Math.ceil(W/cell)+1,rows=Math.ceil(H/cell)+1,v=new Float32Array(cols*rows);
+  for(let j=0;j<rows;j++)for(let i=0;i<cols;i++)v[j*cols+i]=fn(i*cell,j*cell);
+  ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.beginPath();
+  for(const L of levels){for(let j=0;j<rows-1;j++)for(let i=0;i<cols-1;i++){
+    const a=v[j*cols+i],b=v[j*cols+i+1],c=v[(j+1)*cols+i+1],d=v[(j+1)*cols+i];
+    const idx=(a>L?8:0)|(b>L?4:0)|(c>L?2:0)|(d>L?1:0);if(idx===0||idx===15)continue;
+    const x=i*cell,y=j*cell,lp=(p,q)=>(L-p)/(q-p);
+    const T=[x+cell*lp(a,b),y],R=[x+cell,y+cell*lp(b,c)],B=[x+cell*lp(d,c),y+cell],Lf=[x,y+cell*lp(a,d)];
+    const seg=(p,q)=>{ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1])};
+    switch(idx){case 1:case 14:seg(Lf,B);break;case 2:case 13:seg(B,R);break;case 3:case 12:seg(Lf,R);break;case 4:case 11:seg(T,R);break;
+      case 5:seg(Lf,T);seg(B,R);break;case 6:case 9:seg(T,B);break;case 7:case 8:seg(Lf,T);break;case 10:seg(T,R);seg(Lf,B);break}}}
+  ctx.stroke()}
+const N1=noise(1337);
+function drawTopo(){const cv=$("#topo"),dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  const col=getComputedStyle(document.documentElement).getPropertyValue("--topo").trim()||"rgba(0,0,0,.1)";
+  const fn=(x,y)=>N1(x/360,y/360)+.45*N1(x/150+40,y/150+40);
+  contours(ctx,W,H,12,fn,[-.6,-.45,-.3,-.15,0,.15,.3,.45,.6],col,1)}
+function drawHero(){const cv=$("#herocv");if(!cv)return;const u=UNI[S.uni];const r=cv.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);cv.width=r.width*dpr;cv.height=r.height*dpr;const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);
+  const g=ctx.createLinearGradient(0,0,r.width,r.height);g.addColorStop(0,"hsl("+u.hue+" 45% 14%)");g.addColorStop(1,"hsl("+((u.hue+40)%360)+" 55% 26%)");ctx.fillStyle=g;ctx.fillRect(0,0,r.width,r.height);
+  const n=noise(u.id.split("").reduce((a,c)=>a+c.charCodeAt(0),7)*97);contours(ctx,r.width,r.height,10,(x,y)=>n(x/220,y/220)+.4*n(x/90+9,y/90+9),[-.5,-.35,-.2,-.05,.1,.25,.4,.55],"rgba(255,255,255,.14)",1);
+  const sh=ctx.createLinearGradient(0,r.height*.3,0,r.height);sh.addColorStop(0,"rgba(0,0,0,0)");sh.addColorStop(1,"rgba(0,0,0,.55)");ctx.fillStyle=sh;ctx.fillRect(0,0,r.width,r.height)}
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{drawTopo();if(S.view==="uni")drawHero()},150)});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawTopo);
+new MutationObserver(drawTopo).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+/* ============================== BOOT ============================== */
+try{const th=localStorage.getItem("compass.theme");if(th)document.documentElement.dataset.theme=th}catch(e){}
+if(S.interview)S.interview.waiting=false;
+function nextUnanswered(sel){const el=[...document.querySelectorAll(sel)].find(x=>!x.classList.contains("on"));if(el){const r=el.getBoundingClientRect();if(r.top>innerHeight*.72)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"})}}
+async function boot(){
+  drawTopo();
+  const m=location.pathname.match(/^\/r\/([\w-]+)/);
+  if(m){
+    try{const d=await API.j("GET","/api/shared/"+m[1]);if(!d.state||!d.state.user)throw new Error(esc(d.name)+" ещё не прошёл анкету до конца.");
+      READONLY={name:d.name};S=Object.assign(blank(),d.state,{view:"results",openDir:null,openUni:null,hintOff:{}});}
+    catch(e){renderRail();$("#app").innerHTML='<div class="col fade"><span class="eyebrow">Ссылка для просмотра</span><h1>Не получилось открыть профиль</h1><p class="lead">'+e.message+'</p><a class="btn" href="/">Пройти свою анкету</a></div>';return}
+    render();return}
+  try{const h=await API.j("GET","/healthz");AI_ON=!!h.ai}catch(_){}
+  API.j("GET","/api/stats").then(s=>{STATS=s;if(S.view==="start")render()}).catch(()=>{});
+  try{const d=await API.j("GET","/api/me");
+    if(d.user){ME=d.user;
+      if(d.state&&d.state.user)S=Object.assign(blank(),d.state);
+      else if(!(S.user&&!S.user.demo)){S=blank();S.user={name:ME.name,city:""};S.view="wizard"}
+      S.user.name=ME.name;if(S.view==="start"||S.view==="auth")S.view=allDone()?"results":"wizard";syncState="ok"}
+    else if(S.user&&S.view==="auth")S.view="wizard"}
+  catch(_){}
+  render()}
+boot();
+</script>
+</body>
+</html>
